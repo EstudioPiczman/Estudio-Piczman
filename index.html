@@ -158,27 +158,29 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
 <body>
 <div id="auth">
 <div class="auth-box">
-  <div class="auth-logo">
-    <svg width="180" height="80" viewBox="0 0 360 160" xmlns="http://www.w3.org/2000/svg">
-      <line x1="100" y1="10" x2="100" y2="150" stroke="#2F4F56" stroke-width="2"/>
-      <line x1="30" y1="20" x2="170" y2="20" stroke="#2F4F56" stroke-width="2"/>
-      <line x1="100" y1="20" x2="100" y2="130" stroke="#2F4F56" stroke-width="2.5"/>
-      <line x1="65" y1="130" x2="135" y2="130" stroke="#2F4F56" stroke-width="3"/>
-      <line x1="30" y1="20" x2="30" y2="65" stroke="#2F4F56" stroke-width="1.5"/>
-      <line x1="170" y1="20" x2="170" y2="65" stroke="#2F4F56" stroke-width="1.5"/>
-      <path d="M10,65 Q30,80 50,65" stroke="#2F4F56" stroke-width="1.5" fill="none"/>
-      <line x1="10" y1="65" x2="50" y2="65" stroke="#2F4F56" stroke-width="1"/>
-      <path d="M150,65 Q170,80 190,65" stroke="#2F4F56" stroke-width="1.5" fill="none"/>
-      <line x1="150" y1="65" x2="190" y2="65" stroke="#2F4F56" stroke-width="1"/>
-      <line x1="205" y1="10" x2="205" y2="150" stroke="#2F4F56" stroke-width="1.5" opacity="0.4"/>
-      <text x="215" y="75" font-family="DM Serif Text, serif" font-size="42" fill="#2F4F56">Trasmonte</text>
-      <text x="215" y="118" font-family="DM Serif Text, serif" font-size="42" fill="#2F4F56">&amp; Asociados</text>
-    </svg>
-    <div style="border-top:1px solid #2F4F56;padding-top:8px;margin-top:4px;text-align:center">
-      <span style="font-family:'DM Serif Text',serif;font-style:italic;font-size:13px;color:#2F4F56;letter-spacing:.08em">ABOGADOS LABORALES</span>
+  <div class="auth-logo" style="text-align:center;padding:0.5rem 0 1rem">
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px">
+      <svg width="60" height="80" viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg">
+        <line x1="30" y1="8" x2="30" y2="78" stroke="#2F4F56" stroke-width="3"/>
+        <line x1="5" y1="14" x2="55" y2="14" stroke="#2F4F56" stroke-width="2.5"/>
+        <line x1="5" y1="14" x2="5" y2="44" stroke="#2F4F56" stroke-width="2"/>
+        <line x1="55" y1="14" x2="55" y2="44" stroke="#2F4F56" stroke-width="2"/>
+        <path d="M-4,44 Q5,56 14,44" stroke="#2F4F56" stroke-width="2" fill="none"/>
+        <line x1="-4" y1="44" x2="14" y2="44" stroke="#2F4F56" stroke-width="1.5"/>
+        <path d="M46,44 Q55,56 64,44" stroke="#2F4F56" stroke-width="2" fill="none"/>
+        <line x1="46" y1="44" x2="64" y2="44" stroke="#2F4F56" stroke-width="1.5"/>
+        <line x1="18" y1="78" x2="42" y2="78" stroke="#2F4F56" stroke-width="3.5"/>
+      </svg>
+      <div style="border-left:1.5px solid #2F4F56;padding-left:16px;text-align:left">
+        <div style="font-family:'DM Serif Text',serif;font-size:26px;color:#2F4F56;line-height:1.2">Trasmonte</div>
+        <div style="font-family:'DM Serif Text',serif;font-size:26px;color:#2F4F56;line-height:1.2">&amp; Asociados</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #2F4F56;padding-top:8px">
+      <span style="font-family:'DM Serif Text',serif;font-style:italic;font-size:13px;color:#2F4F56;letter-spacing:.1em">ABOGADOS LABORALES</span>
     </div>
   </div>
-  <p style="margin-top:1rem">Acceso restringido al equipo</p>
+  <p style="margin-top:0.5rem">Acceso restringido al equipo</p>
   <input type="text" id="u-in" placeholder="Usuario" autocomplete="username">
   <input type="password" id="p-in" placeholder="Contraseña" autocomplete="current-password">
   <button class="auth-btn" onclick="doLogin()">Ingresar</button>
@@ -548,16 +550,30 @@ function doLogin(){
   const p=document.getElementById('p-in').value;
   if(USERS[u]&&USERS[u]===p){
     currentUser=u;
-    document.getElementById('auth').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('notas-title').textContent=`Mis notas (${u})`;
-    loadAll();
+    localStorage.setItem('tm_session',u);
+    iniciarSesion(u);
   } else {
     document.getElementById('auth-err').style.display='block';
   }
 }
-document.getElementById('p-in').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
-function doLogout(){currentUser='';document.getElementById('auth').style.display='flex';document.getElementById('app').style.display='none';}
+function iniciarSesion(u){
+  currentUser=u;
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('notas-title').textContent=`Mis notas (${u})`;
+  loadAll();
+}
+function checkSession(){
+  const u=localStorage.getItem('tm_session');
+  if(u&&USERS[u]){iniciarSesion(u);}
+}
+function doLogout(){
+  localStorage.removeItem('tm_session');
+  currentUser='';
+  document.getElementById('auth').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+checkSession();
 
 function setSync(s,msg){const el=document.getElementById('sync-status');el.className='sync-status '+s;el.textContent=msg;}
 
