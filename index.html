@@ -3,69 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estudio Piczman</title>
+<title>Trasmonte & Asociados</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px;min-height:100vh}
+body{font-family:'Montserrat',system-ui,sans-serif;background:#F2EAE1;color:#2F4F56;font-size:14px;min-height:100vh}
 a{color:inherit}
-
-/* AUTH */
 #auth{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f3}
-.auth-box{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:2.5rem;width:100%;max-width:360px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+.auth-box{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:2.5rem;width:100%;max-width:360px}
 .auth-logo{font-size:28px;margin-bottom:0.5rem}
 .auth-box h1{font-size:18px;font-weight:600;margin-bottom:0.25rem}
 .auth-box p{color:#888;font-size:13px;margin-bottom:1.5rem}
-.auth-box input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:0.75rem;outline:none;transition:border .2s}
+.auth-box input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:0.75rem;outline:none}
 .auth-box input:focus{border-color:#333}
 .auth-btn{width:100%;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 .auth-error{color:#e24b4a;font-size:12px;margin-top:8px;display:none}
-
-/* LAYOUT */
 #app{display:none;min-height:100vh}
-.topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 1.5rem;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.topbar-logo{font-size:15px;font-weight:600;flex:1;display:flex;align-items:center;gap:8px}
-.topbar-logo span{color:#888;font-weight:400;font-size:13px}
+.topbar{background:#2F4F56;border-bottom:1px solid #264448;padding:0 1.5rem;height:58px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'DM Serif Text',serif;font-size:17px;font-weight:400;color:#F2EAE1;flex:1;display:flex;align-items:center;gap:10px}
+.topbar-logo span{color:#758B8F;font-weight:400;font-size:11px;margin-left:4px;font-family:'Montserrat',sans-serif;letter-spacing:.06em;text-transform:uppercase}
 .nav-tabs{display:flex;gap:4px}
-.nav-tab{padding:6px 14px;border-radius:20px;font-size:13px;color:#666;cursor:pointer;border:none;background:transparent;transition:all .15s}
-.nav-tab.active,.nav-tab:hover{background:#f0f0ee;color:#1a1a1a}
-.nav-tab.active{font-weight:500}
+.nav-tab{padding:6px 12px;border-radius:20px;font-size:13px;color:#a8c4c8;cursor:pointer;border:none;background:transparent;font-family:'Montserrat',sans-serif}
+.nav-tab.active,.nav-tab:hover{background:rgba(242,234,225,0.15);color:#F2EAE1;font-weight:500}
 .topbar-right{display:flex;align-items:center;gap:8px}
-.sync-status{font-size:11px;color:#888;padding:4px 8px;border-radius:10px;background:#f5f5f3}
-.sync-status.saving{color:#d97706;background:#fef3c7}
-.sync-status.saved{color:#059669;background:#d1fae5}
-.sync-status.error{color:#e24b4a;background:#fee2e2}
-.logout-btn{font-size:12px;color:#888;cursor:pointer;padding:6px 10px;border:1px solid #e5e5e5;border-radius:8px;background:transparent}
-
-/* SECTIONS */
+.sync-status{font-size:11px;color:#a8c4c8;padding:4px 8px;border-radius:10px;background:rgba(0,0,0,0.2)}
+.sync-status.saving{color:#fcd34d;background:rgba(251,191,36,0.2)}
+.sync-status.saved{color:#6ee7b7;background:rgba(16,185,129,0.2)}
+.sync-status.error{color:#fca5a5;background:rgba(239,68,68,0.2)}
+.logout-btn{font-size:12px;color:#a8c4c8;cursor:pointer;padding:6px 10px;border:1px solid rgba(242,234,225,0.2);border-radius:8px;background:transparent;font-family:'Montserrat',sans-serif}
 .section{display:none;padding:1.5rem;max-width:1400px;margin:0 auto}
 .section.active{display:block}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
 .section-title{font-size:16px;font-weight:600}
-
-/* METRICS */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
 .metric{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:1rem}
 .metric-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
 .metric-value{font-size:24px;font-weight:600}
-.metric-sub{font-size:11px;color:#aaa;margin-top:2px}
 .metric.danger .metric-value{color:#e24b4a}
-.metric.success .metric-value{color:#059669}
-.metric.warning .metric-value{color:#d97706}
-
-/* FUERO TABS */
 .fuero-tabs{display:flex;gap:6px;margin-bottom:1rem}
-.fuero-tab{padding:6px 16px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid #e5e5e5;background:#fff;color:#666;transition:all .15s}
+.fuero-tab{padding:6px 16px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid #e5e5e5;background:#fff;color:#666}
 .fuero-tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-
-/* FILTERS */
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem;align-items:center}
 .filters input,.filters select{padding:8px 11px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;outline:none}
 .filters input:focus,.filters select:focus{border-color:#333}
-.search-input{min-width:240px}
-.btn-primary{padding:8px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;margin-left:auto}
+.search-input{min-width:220px}
+.btn-primary{padding:8px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
 .btn-primary:hover{background:#333}
-
-/* TABLE */
 .table-wrap{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#888;border-bottom:1px solid #f0f0ee;background:#fafafa;text-transform:uppercase;letter-spacing:.04em}
@@ -74,44 +57,22 @@ tr:last-child td{border-bottom:none}
 tr.data-row:hover td{background:#fafafa;cursor:pointer}
 .col-autos{width:25%}.col-expte{width:10%}.col-juz{width:12%}.col-etapa{width:10%}
 .col-monto{width:10%}.col-detalle{width:22%}.col-hacer{width:8%}.col-acc{width:3%}
-
-/* BADGES */
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
-.b-dc{background:#dbeafe;color:#1e40af}
-.b-tl{background:#ede9fe;color:#5b21b6}
-.b-pr{background:#fef3c7;color:#92400e}
-.b-st{background:#d1fae5;color:#065f46}
-.b-ej{background:#fee2e2;color:#991b1b}
-.b-co{background:#d1fae5;color:#065f46}
-.b-ac{background:#d1fae5;color:#065f46}
-.b-nd{background:#f3f4f6;color:#6b7280}
-
-/* HACER TAG */
+.b-dc{background:#dbeafe;color:#1e40af}.b-tl{background:#ede9fe;color:#5b21b6}
+.b-pr{background:#fef3c7;color:#92400e}.b-st{background:#d1fae5;color:#065f46}
+.b-ej{background:#fee2e2;color:#991b1b}.b-co{background:#d1fae5;color:#065f46}
+.b-ac{background:#d1fae5;color:#065f46}.b-nd{background:#f3f4f6;color:#6b7280}
 .hacer-tag{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-/* MONTO */
 .monto-cell{font-size:12px;font-weight:500;color:#059669}
-.monto-pend{color:#e24b4a}
-
-/* DETAIL CLAMP */
 .detail-text{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#666;line-height:1.4}
-
-/* EMPTY */
 .empty{padding:3rem;text-align:center;color:#aaa;font-size:13px}
-
-/* LOADING */
-.loading{padding:3rem;text-align:center;color:#aaa;font-size:13px}
-.spinner{display:inline-block;width:18px;height:18px;border:2px solid #e5e5e5;border-top-color:#1a1a1a;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* MODAL */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:14px;border:1px solid #e5e5e5;width:100%;max-width:820px;padding:1.75rem;margin:auto}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
 .modal-header h2{font-size:16px;font-weight:600}
-.modal-close{background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1;padding:2px 6px}
-.modal-tabs{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:1px solid #f0f0ee;padding-bottom:0}
+.modal-close{background:none;border:none;font-size:20px;color:#888;cursor:pointer}
+.modal-tabs{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:1px solid #f0f0ee}
 .modal-tab{padding:8px 16px;font-size:13px;color:#888;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}
 .modal-tab.active{color:#1a1a1a;font-weight:500;border-bottom-color:#1a1a1a}
 .modal-panel{display:none}.modal-panel.active{display:block}
@@ -126,15 +87,11 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
 .btn-delete{padding:9px 16px;border:1px solid #fca5a5;border-radius:8px;background:#fff;color:#e24b4a;font-size:13px;cursor:pointer}
 .btn-cancel{padding:9px 16px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer}
 .btn-save{padding:9px 18px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
-
-/* CUOTAS */
 .cuotas-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .cuota-row{display:grid;grid-template-columns:2fr 2fr 1fr auto;gap:8px;align-items:center}
 .cuota-row input,.cuota-row select{padding:7px 9px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;background:#fff;color:#1a1a1a}
 .btn-add-cuota{padding:7px 14px;border:1px dashed #e5e5e5;border-radius:8px;background:transparent;color:#888;font-size:12px;cursor:pointer;margin-top:4px}
 .btn-rm{background:none;border:none;color:#e24b4a;cursor:pointer;font-size:16px;padding:0 4px}
-
-/* CALCULADORA */
 .calc-box{background:#fafafa;border:1px solid #e5e5e5;border-radius:10px;padding:1.25rem;margin-top:1rem}
 .calc-box h4{font-size:13px;font-weight:600;margin-bottom:1rem}
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
@@ -142,8 +99,7 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
 .calc-result-label{font-size:12px;color:#888}
 .calc-result-value{font-size:22px;font-weight:600;color:#059669}
 .calc-note{font-size:11px;color:#aaa;margin-top:6px}
-
-/* CALENDARIO */
+.tasa-link{font-size:12px;color:#3b82f6;margin-top:6px;display:block}
 .cal-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
 .cal-filters input,.cal-filters select{padding:8px 11px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;outline:none}
 .event-list{display:flex;flex-direction:column;gap:8px}
@@ -164,35 +120,65 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
 .ev-causa{font-size:13px;font-weight:500;line-height:1.4}
 .ev-obs{font-size:12px;color:#888;margin-top:3px;line-height:1.4}
 .ev-link a{font-size:12px;color:#3b82f6;margin-top:4px;display:inline-block;text-decoration:none}
-.ev-link a:hover{text-decoration:underline}
 .ev-actions{display:flex;gap:6px;margin-top:8px}
 .ev-btn{padding:4px 10px;border:1px solid #e5e5e5;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#666}
-.ev-btn:hover{background:#f5f5f3}
-.cal-group-label{font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 0.5rem;padding-bottom:4px;border-bottom:1px solid #f0f0ee}
-
-/* MODAL EVENTO */
+.day-separator{font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 0.5rem;padding-bottom:4px;border-bottom:1px solid #f0f0ee}
 .modal-ev{max-width:580px}
-
-/* TOTALES */
 .totales-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem}
 .total-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem}
 .total-card-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
 .total-card-value{font-size:26px;font-weight:700}
-.total-card-value.green{color:#059669}
-.total-card-value.red{color:#e24b4a}
-.total-card-value.blue{color:#1e40af}
-
-.day-separator{font-size:11px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;padding-left:2px}
+.total-card-value.green{color:#059669}.total-card-value.red{color:#e24b4a}.total-card-value.blue{color:#1e40af}
+/* PENDIENTES */
+.sub-tabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
+.sub-tab{padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid #e5e5e5;background:#fff;color:#666}
+.sub-tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.sub-panel{display:none}.sub-panel.active{display:block}
+.pend-table-wrap{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;margin-top:1rem}
+.pend-table-wrap table{table-layout:auto}
+.pend-table-wrap th,.pend-table-wrap td{padding:10px 14px;font-size:13px}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.sp-finalizado{background:#d1fae5;color:#065f46}
+.sp-pendiente{background:#fee2e2;color:#991b1b}
+.sp-no-aplica{background:#f3f4f6;color:#6b7280}
+.sp-incompleta{background:#fef3c7;color:#92400e}
+.sp-completa{background:#d1fae5;color:#065f46}
+/* NOTAS */
+.notas-wrap{display:flex;flex-direction:column;gap:8px}
+.nota-row{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:1rem;display:grid;grid-template-columns:2fr 2fr 1fr 1fr auto;gap:12px;align-items:center}
+.nota-row input,.nota-row select{padding:7px 9px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;width:100%}
+.nota-status{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.ns-pendiente{background:#fee2e2;color:#991b1b}
+.ns-en-curso{background:#fef3c7;color:#92400e}
+.ns-ver-juan{background:#fef9c3;color:#854d0e}
+.ns-completado{background:#d1fae5;color:#065f46}
+.nota-header{display:grid;grid-template-columns:2fr 2fr 1fr 1fr auto;gap:12px;padding:8px 1rem;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em}
 </style>
 </head>
 <body>
-
-<!-- AUTH -->
 <div id="auth">
 <div class="auth-box">
-  <div class="auth-logo">⚖️</div>
-  <h1>Estudio Piczman</h1>
-  <p>Acceso restringido al equipo</p>
+  <div class="auth-logo">
+    <svg width="180" height="80" viewBox="0 0 360 160" xmlns="http://www.w3.org/2000/svg">
+      <line x1="100" y1="10" x2="100" y2="150" stroke="#2F4F56" stroke-width="2"/>
+      <line x1="30" y1="20" x2="170" y2="20" stroke="#2F4F56" stroke-width="2"/>
+      <line x1="100" y1="20" x2="100" y2="130" stroke="#2F4F56" stroke-width="2.5"/>
+      <line x1="65" y1="130" x2="135" y2="130" stroke="#2F4F56" stroke-width="3"/>
+      <line x1="30" y1="20" x2="30" y2="65" stroke="#2F4F56" stroke-width="1.5"/>
+      <line x1="170" y1="20" x2="170" y2="65" stroke="#2F4F56" stroke-width="1.5"/>
+      <path d="M10,65 Q30,80 50,65" stroke="#2F4F56" stroke-width="1.5" fill="none"/>
+      <line x1="10" y1="65" x2="50" y2="65" stroke="#2F4F56" stroke-width="1"/>
+      <path d="M150,65 Q170,80 190,65" stroke="#2F4F56" stroke-width="1.5" fill="none"/>
+      <line x1="150" y1="65" x2="190" y2="65" stroke="#2F4F56" stroke-width="1"/>
+      <line x1="205" y1="10" x2="205" y2="150" stroke="#2F4F56" stroke-width="1.5" opacity="0.4"/>
+      <text x="215" y="75" font-family="DM Serif Text, serif" font-size="42" fill="#2F4F56">Trasmonte</text>
+      <text x="215" y="118" font-family="DM Serif Text, serif" font-size="42" fill="#2F4F56">&amp; Asociados</text>
+    </svg>
+    <div style="border-top:1px solid #2F4F56;padding-top:8px;margin-top:4px;text-align:center">
+      <span style="font-family:'DM Serif Text',serif;font-style:italic;font-size:13px;color:#2F4F56;letter-spacing:.08em">ABOGADOS LABORALES</span>
+    </div>
+  </div>
+  <p style="margin-top:1rem">Acceso restringido al equipo</p>
   <input type="text" id="u-in" placeholder="Usuario" autocomplete="username">
   <input type="password" id="p-in" placeholder="Contraseña" autocomplete="current-password">
   <button class="auth-btn" onclick="doLogin()">Ingresar</button>
@@ -200,14 +186,28 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
 </div>
 </div>
 
-<!-- APP -->
 <div id="app">
 <div class="topbar">
-  <div class="topbar-logo">⚖️ Estudio Piczman <span>Panel de causas</span></div>
+  <div class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <line x1="50" y1="5" x2="50" y2="90" stroke="#F2EAE1" stroke-width="4"/>
+      <line x1="10" y1="15" x2="90" y2="15" stroke="#F2EAE1" stroke-width="3"/>
+      <line x1="10" y1="15" x2="10" y2="50" stroke="#F2EAE1" stroke-width="2.5"/>
+      <line x1="90" y1="15" x2="90" y2="50" stroke="#F2EAE1" stroke-width="2.5"/>
+      <path d="M0,50 Q10,62 20,50" stroke="#F2EAE1" stroke-width="2.5" fill="none"/>
+      <line x1="0" y1="50" x2="20" y2="50" stroke="#F2EAE1" stroke-width="1.5"/>
+      <path d="M80,50 Q90,62 100,50" stroke="#F2EAE1" stroke-width="2.5" fill="none"/>
+      <line x1="80" y1="50" x2="100" y2="50" stroke="#F2EAE1" stroke-width="1.5"/>
+      <line x1="30" y1="90" x2="70" y2="90" stroke="#F2EAE1" stroke-width="4"/>
+    </svg>
+    Trasmonte & Asociados <span>Panel de causas</span>
+  </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSec('causas',this)">Causas</button>
     <button class="nav-tab" onclick="showSec('calendario',this)">Calendario</button>
     <button class="nav-tab" onclick="showSec('totales',this)">Totales</button>
+    <button class="nav-tab" onclick="showSec('pendientes',this)">Pendientes</button>
+    <button class="nav-tab" onclick="showSec('notas',this)">Notas</button>
   </div>
   <div class="topbar-right">
     <span class="sync-status" id="sync-status">Listo</span>
@@ -238,14 +238,10 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th class="col-autos">Carátula</th>
-        <th class="col-expte">Expediente</th>
-        <th class="col-juz">Juzgado</th>
-        <th class="col-etapa">Etapa</th>
-        <th class="col-monto">Monto demanda</th>
-        <th class="col-detalle">Último movimiento</th>
-        <th class="col-hacer">Pendiente</th>
-        <th class="col-acc"></th>
+        <th class="col-autos">Carátula</th><th class="col-expte">Expediente</th>
+        <th class="col-juz">Juzgado</th><th class="col-etapa">Etapa</th>
+        <th class="col-monto">Monto demanda</th><th class="col-detalle">Último movimiento</th>
+        <th class="col-hacer">Pendiente</th><th class="col-acc"></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -268,9 +264,15 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
       <option>PRUEBA</option><option>HACER DEMANDA</option>
       <option>SUBIR DEMANDA</option><option>RECORDATORIO</option><option>HACER FACTURA</option>
     </select>
-    <select id="cal-mes" onchange="renderCal()"><option value="">Todos los meses</option></select>
+    <select id="cal-vista" onchange="renderCal()">
+      <option value="todos">Todos</option>
+      <option value="dia">Hoy</option>
+      <option value="semana">Esta semana</option>
+      <option value="mes">Este mes</option>
+    </select>
+    <select id="cal-mes" onchange="renderCal()"><option value="">Filtrar por mes</option></select>
   </div>
-  <div class="event-list" id="event-list"><div class="loading"><span class="spinner"></span>Cargando eventos...</div></div>
+  <div class="event-list" id="event-list"></div>
 </div>
 
 <!-- TOTALES -->
@@ -279,27 +281,101 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
   <div class="totales-grid" id="totales-grid"></div>
   <div class="calc-box">
     <h4>Calculadora de intereses</h4>
+    <div style="margin-bottom:10px">
+      <a class="tasa-link" href="https://tasas.cpacf.org.ar/index" target="_blank">🔗 Ver tasas CPACF — Usuario: 36148690 | Tomo: 122 | Folio: 547</a>
+    </div>
     <div class="calc-grid">
-      <div class="form-group"><label>Monto base (ARS)</label><input type="number" id="calc-monto" placeholder="Ej: 5000000" oninput="calcular()"></div>
-      <div class="form-group"><label>Fecha desde</label><input type="date" id="calc-fecha" oninput="calcular()"></div>
+      <div class="form-group"><label>Capital de sentencia (ARS)</label><input type="number" id="calc-monto" placeholder="Ej: 5000000" oninput="calcular()"></div>
+      <div class="form-group"><label>Fecha de sentencia</label><input type="date" id="calc-fecha" oninput="calcular()"></div>
       <div class="form-group"><label>Tasa aplicable</label>
         <select id="calc-tasa" onchange="calcular()">
           <option value="">Seleccionar tasa</option>
           <option value="bna">Tasa Activa Efectiva BNA 30 días (Civil/Comercial)</option>
-          <option value="ipc">IPC + 6% anual (Laboral)</option>
+          <option value="ipc">IPC mensual simple (Laboral)</option>
         </select>
       </div>
       <div class="form-group"><label>Fecha hasta</label><input type="date" id="calc-hasta" oninput="calcular()"></div>
+      <div class="form-group" id="ipc-group" style="display:none"><label>% IPC mensual promedio (ingresar manualmente)</label><input type="number" id="calc-ipc" placeholder="Ej: 3.5" step="0.01" oninput="calcular()"></div>
     </div>
     <div class="calc-result">
       <div>
-        <div class="calc-result-label">Monto actualizado</div>
+        <div class="calc-result-label">Intereses calculados (interés simple)</div>
         <div class="calc-note" id="calc-note">Completá los campos para calcular</div>
       </div>
       <div class="calc-result-value" id="calc-result">—</div>
     </div>
-    <div class="calc-note" style="margin-top:8px">* Tasa BNA activa efectiva mensual promedio histórico ~6% mensual. IPC estimado +100% anual + 6%. Los valores son referenciales; verificar tasas vigentes al momento del cálculo.</div>
+    <div class="calc-result" style="margin-top:8px">
+      <div><div class="calc-result-label">Capital + Intereses</div></div>
+      <div class="calc-result-value" id="calc-total" style="font-size:18px">—</div>
+    </div>
+    <div class="calc-note" style="margin-top:8px">* Laboral: interés simple = capital × tasa mensual × cantidad de meses. Verificar tasas vigentes en CPACF.</div>
   </div>
+</div>
+
+<!-- PENDIENTES -->
+<div class="section" id="sec-pendientes">
+  <div class="section-header">
+    <span class="section-title">Pendientes</span>
+    <button class="btn-primary" id="btn-add-pend" onclick="addPendRow()">+ Agregar</button>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="showSubTab('negociacion',this)">En negociación</button>
+    <button class="sub-tab" onclick="showSubTab('demanda',this)">Para hacer demanda</button>
+    <button class="sub-tab" onclick="showSubTab('prueba',this)">Prueba pendiente</button>
+    <button class="sub-tab" onclick="showSubTab('sortear',this)">Sortear y subir</button>
+  </div>
+
+  <!-- NEGOCIACION -->
+  <div class="sub-panel active" id="spanel-negociacion">
+    <div class="pend-table-wrap">
+      <table>
+        <thead><tr><th>Requirente</th><th>Demandado</th><th>SECLO</th><th></th></tr></thead>
+        <tbody id="tb-negociacion"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DEMANDA -->
+  <div class="sub-panel" id="spanel-demanda">
+    <div class="pend-table-wrap">
+      <table>
+        <thead><tr><th>Requirente</th><th>Demandado</th><th>Link Drive</th><th></th></tr></thead>
+        <tbody id="tb-demanda"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PRUEBA -->
+  <div class="sub-panel" id="spanel-prueba">
+    <div class="pend-table-wrap">
+      <table>
+        <thead><tr><th>Requirente</th><th>Demandado</th><th>Documental</th><th>Informativa</th><th>Testimonial</th><th>Pericial</th><th>Doc. demandada</th><th></th></tr></thead>
+        <tbody id="tb-prueba"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SORTEAR -->
+  <div class="sub-panel" id="spanel-sortear">
+    <div class="pend-table-wrap">
+      <table>
+        <thead><tr><th>Requirente</th><th>Demandado</th><th>Link Drive</th><th></th></tr></thead>
+        <tbody id="tb-sortear"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- NOTAS -->
+<div class="section" id="sec-notas">
+  <div class="section-header">
+    <span class="section-title" id="notas-title">Mis notas</span>
+    <button class="btn-primary" onclick="addNota()">+ Nueva tarea</button>
+  </div>
+  <div class="nota-header">
+    <span>Tarea pendiente</span><span>Causa relacionada</span><span>Deadline</span><span>Status</span><span></span>
+  </div>
+  <div class="notas-wrap" id="notas-wrap"></div>
 </div>
 </div>
 
@@ -316,7 +392,6 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
     <button class="modal-tab" onclick="showMTab('montos',this)">Montos y cuotas</button>
     <button class="modal-tab" onclick="showMTab('mensajes',this)">Mensajes</button>
   </div>
-  <!-- DATOS -->
   <div class="modal-panel active" id="mpanel-datos">
     <div class="form-grid">
       <div class="form-group full"><label>Carátula (autos)</label><input id="f-autos" type="text"></div>
@@ -332,41 +407,37 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
           <option>Ejecución</option><option>Conciliado</option><option>Acuerdo conciliatorio</option>
         </select>
       </div>
-      <div class="form-group"><label>Celular cliente</label><input id="f-cel" type="text" placeholder="Sin 0 ni 15"></div>
+      <div class="form-group"><label>Celular cliente</label><input id="f-cel" type="text"></div>
       <div class="form-group full"><label>Último movimiento / detalle</label><textarea id="f-detalle"></textarea></div>
       <div class="form-group full"><label>Para hacer (pendientes)</label><textarea id="f-hacer" style="min-height:52px"></textarea></div>
     </div>
   </div>
-  <!-- PRUEBA -->
   <div class="modal-panel" id="mpanel-prueba">
     <div class="form-grid">
       <div class="form-group full"><label>Pruebas ofrecidas</label><input id="f-pruebas" type="text" placeholder="Documental, Informativa, Testimonial, Pericial..."></div>
-      <div class="form-group full"><label>Detalle testimonial (testigos y fechas)</label><textarea id="f-test"></textarea></div>
+      <div class="form-group full"><label>Detalle testimonial</label><textarea id="f-test"></textarea></div>
       <div class="form-group full"><label>Detalle informativa (oficios)</label><textarea id="f-info"></textarea></div>
       <div class="form-group full"><label>Detalle pericial</label><textarea id="f-peri"></textarea></div>
       <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
     </div>
   </div>
-  <!-- MONTOS -->
   <div class="modal-panel" id="mpanel-montos">
     <div class="form-grid">
       <div class="form-group"><label>Monto demandado (ARS)</label><input id="f-monto-dem" type="number" placeholder="0"></div>
       <div class="form-group"><label>Fecha de demanda</label><input id="f-fecha-dem" type="date"></div>
       <div class="form-group"><label>Monto sentencia (ARS)</label><input id="f-monto-sent" type="number" placeholder="0"></div>
       <div class="form-group"><label>Fecha sentencia</label><input id="f-fecha-sent" type="date"></div>
-      <div class="form-group"><label>Tasa de interés aplicable</label>
+      <div class="form-group"><label>Tasa de interés</label>
         <select id="f-tasa">
           <option value="">Sin calcular</option>
           <option value="bna">Tasa Activa BNA (Civil/Comercial)</option>
-          <option value="ipc">IPC + 6% anual (Laboral)</option>
+          <option value="ipc">IPC mensual simple (Laboral)</option>
         </select>
       </div>
       <div class="form-group"><label>Estado de cobro</label>
         <select id="f-cobro">
-          <option value="">—</option>
-          <option>Pendiente de cobro</option>
-          <option>Cobrado parcialmente</option>
-          <option>Cobrado totalmente</option>
+          <option value="">—</option><option>Pendiente de cobro</option>
+          <option>Cobrado parcialmente</option><option>Cobrado totalmente</option>
         </select>
       </div>
       <div class="form-group"><label>Monto cobrado (ARS)</label><input id="f-monto-cobrado" type="number" placeholder="0"></div>
@@ -378,27 +449,29 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
       <button class="btn-add-cuota" onclick="addCuota()">+ Agregar cuota</button>
     </div>
   </div>
-  <!-- MENSAJES -->
   <div class="modal-panel" id="mpanel-mensajes">
     <div class="form-grid">
       <div class="form-group full"><label>Último mensaje enviado al cliente</label><textarea id="f-msg" style="min-height:100px"></textarea></div>
       <div class="form-group"><label>Último mes de contacto</label><input id="f-msg-mes" type="text" placeholder="Ej: abril 2026"></div>
       <div class="form-group full" style="margin-top:0.5rem">
-        <label style="font-size:12px;color:#888;font-weight:500">Calculadora rápida de intereses para mensaje</label>
+        <label style="font-size:12px;color:#888;font-weight:500">Calculadora rápida de intereses</label>
         <div class="calc-box" style="margin-top:0.5rem">
-          <div class="calc-grid">
-            <div class="form-group"><label>Monto base</label><input type="number" id="mcalc-monto" placeholder="0" oninput="mcalcular()"></div>
+          <a class="tasa-link" href="https://tasas.cpacf.org.ar/index" target="_blank">🔗 Tasas CPACF — Usuario: 36148690 | Tomo: 122 | Folio: 547</a>
+          <div class="calc-grid" style="margin-top:10px">
+            <div class="form-group"><label>Capital</label><input type="number" id="mcalc-monto" placeholder="0" oninput="mcalcular()"></div>
             <div class="form-group"><label>Desde</label><input type="date" id="mcalc-desde" oninput="mcalcular()"></div>
             <div class="form-group"><label>Tasa</label>
               <select id="mcalc-tasa" onchange="mcalcular()">
                 <option value="">—</option>
                 <option value="bna">Tasa BNA</option>
-                <option value="ipc">IPC + 6%</option>
+                <option value="ipc">IPC simple</option>
               </select>
             </div>
             <div class="form-group"><label>Hasta</label><input type="date" id="mcalc-hasta" oninput="mcalcular()"></div>
+            <div class="form-group" id="mipc-group" style="display:none"><label>% IPC mensual</label><input type="number" id="mcalc-ipc" placeholder="Ej: 3.5" step="0.01" oninput="mcalcular()"></div>
           </div>
-          <div class="calc-result"><div><div class="calc-result-label">Monto actualizado</div></div><div class="calc-result-value" id="mcalc-result">—</div></div>
+          <div class="calc-result"><div><div class="calc-result-label">Intereses</div></div><div class="calc-result-value" id="mcalc-result">—</div></div>
+          <div class="calc-result" style="margin-top:8px"><div><div class="calc-result-label">Capital + Intereses</div></div><div class="calc-result-value" id="mcalc-total" style="font-size:18px">—</div></div>
         </div>
       </div>
     </div>
@@ -421,8 +494,7 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
     <button class="modal-close" onclick="closeEvModal()">×</button>
   </div>
   <div class="form-grid">
-    <div class="form-group full">
-      <label>Tipo de evento</label>
+    <div class="form-group full"><label>Tipo de evento</label>
       <input id="ev-tipo" list="tipos-list" placeholder="Seleccionar o escribir...">
       <datalist id="tipos-list">
         <option>AUDIENCIA SECLO #1</option><option>AUDIENCIA SECLO #2</option>
@@ -434,8 +506,10 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
     </div>
     <div class="form-group"><label>Fecha</label><input type="date" id="ev-fecha"></div>
     <div class="form-group"><label>Hora</label><input type="time" id="ev-hora"></div>
-    <div class="form-group full"><label>Causa / descripción</label><input id="ev-causa" type="text" placeholder="Carátula de la causa o descripción del evento"></div>
+    <div class="form-group full"><label>Causa / descripción</label><input id="ev-causa" type="text"></div>
     <div class="form-group full"><label>Link (Zoom, Meet, Drive...)</label><input id="ev-link" type="text" placeholder="https://..."></div>
+    <div class="form-group"><label>ID de reunión</label><input id="ev-id" type="text" placeholder="Ej: 784 1634 6392"></div>
+    <div class="form-group"><label>Contraseña / Pass</label><input id="ev-pass" type="text" placeholder="Ej: 0MEjEh"></div>
     <div class="form-group full"><label>Observaciones</label><textarea id="ev-obs" style="min-height:64px"></textarea></div>
   </div>
   <div class="modal-footer">
@@ -453,61 +527,74 @@ const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwAsdbRI2NNiYlw1LIRAJq
 const SHEET_LABORAL='Status_Laboral';
 const SHEET_COMERCIAL='Status_CyC';
 const SHEET_CAL='Calendario';
+const SHEET_PEND='Pendientes';
 
 const USERS={admin:'estudio2024',juan:'piczman2024',bruno:'estudio2024'};
 const MESES_ES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const ETAPA_CLASS={'Demanda/Contestación':'b-dc','Traba de litis':'b-tl','Prueba':'b-pr','Sentencia':'b-st','Ejecución':'b-ej','Conciliado':'b-co','Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'};
-
 const CAUSAS_COLS=['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes'];
-const EV_COLS=['tipo','fecha','hora','causa','link','obs'];
+const EV_COLS=['tipo','fecha','hora','causa','link','evid','evpass','obs'];
 
-let state={laboral:[],comercial:[],eventos:[]};
+let state={laboral:[],comercial:[],eventos:[],pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[]},notas:{}};
 let currentFuero='laboral';
 let editCausaIdx=null;
 let editEvIdx=null;
 let cuotasTemp=[];
+let currentUser='';
+let currentSubTab='negociacion';
 
-// AUTH
 function doLogin(){
   const u=document.getElementById('u-in').value.trim().toLowerCase();
   const p=document.getElementById('p-in').value;
   if(USERS[u]&&USERS[u]===p){
+    currentUser=u;
     document.getElementById('auth').style.display='none';
     document.getElementById('app').style.display='block';
+    document.getElementById('notas-title').textContent=`Mis notas (${u})`;
     loadAll();
   } else {
     document.getElementById('auth-err').style.display='block';
   }
 }
 document.getElementById('p-in').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
-function doLogout(){document.getElementById('auth').style.display='flex';document.getElementById('app').style.display='none';}
+function doLogout(){currentUser='';document.getElementById('auth').style.display='flex';document.getElementById('app').style.display='none';}
 
-// SYNC
-function setSync(s,msg){
-  const el=document.getElementById('sync-status');
-  el.className='sync-status '+s;
-  el.textContent=msg;
-}
+function setSync(s,msg){const el=document.getElementById('sync-status');el.className='sync-status '+s;el.textContent=msg;}
 
 async function loadAll(){
   setSync('saving','Cargando...');
   try{
-    const [lab,cyc,cal]=await Promise.all([
-      fetchSheet(SHEET_LABORAL),
-      fetchSheet(SHEET_COMERCIAL),
-      fetchSheet(SHEET_CAL)
-    ]);
+    const[lab,cyc,cal]=await Promise.all([fetchSheet(SHEET_LABORAL),fetchSheet(SHEET_COMERCIAL),fetchSheet(SHEET_CAL)]);
     state.laboral=parseSheet(lab,CAUSAS_COLS);
     state.comercial=parseSheet(cyc,CAUSAS_COLS);
     state.eventos=parseSheet(cal,EV_COLS);
-    buildCalMeses();
-    renderMetrics();renderTable();renderCal();renderTotales();
+    loadLocalData();
+    buildCalMeses();renderMetrics();renderTable();renderCal();renderTotales();renderPendientes();renderNotas();
     setSync('saved','Sincronizado');
     setTimeout(()=>setSync('','Listo'),2000);
   }catch(e){
     setSync('error','Error al cargar');
-    renderMetrics();renderTable();renderCal();renderTotales();
+    loadLocalData();
+    renderMetrics();renderTable();renderCal();renderTotales();renderPendientes();renderNotas();
   }
+}
+
+function loadLocalData(){
+  try{
+    const p=localStorage.getItem('piczman_pendientes');
+    if(p)state.pendientes=JSON.parse(p);
+    const n=localStorage.getItem('piczman_notas_'+currentUser);
+    if(n)state.notas[currentUser]=JSON.parse(n);
+    else state.notas[currentUser]=[];
+  }catch(e){}
+}
+
+function saveLocalPendientes(){
+  try{localStorage.setItem('piczman_pendientes',JSON.stringify(state.pendientes));}catch(e){}
+}
+
+function saveLocalNotas(){
+  try{localStorage.setItem('piczman_notas_'+currentUser,JSON.stringify(state.notas[currentUser]||[]));}catch(e){}
 }
 
 async function fetchSheet(sheet){
@@ -517,7 +604,7 @@ async function fetchSheet(sheet){
 
 function parseSheet(rows,cols){
   if(!rows||!rows.length)return[];
-  const data=rows[0][0]==='autos'||rows[0][0]==='tipo'?rows.slice(1):rows;
+  const data=rows[0][0]===cols[0]?rows.slice(1):rows;
   return data.filter(r=>r.some(c=>c!=='')).map(r=>{
     const obj={};
     cols.forEach((c,i)=>obj[c]=r[i]||'');
@@ -529,8 +616,7 @@ function parseSheet(rows,cols){
 
 async function saveSheet(sheet,data,cols){
   setSync('saving','Guardando...');
-  const header=cols;
-  const rows=[header,...data.map(r=>cols.map(c=>{
+  const rows=[cols,...data.map(r=>cols.map(c=>{
     const v=r[c];
     if(c==='cuotas')return JSON.stringify(Array.isArray(v)?v:[]);
     return v||'';
@@ -542,13 +628,13 @@ async function saveSheet(sheet,data,cols){
   }catch{setSync('error','Error al guardar');}
 }
 
-// NAV
 function showSec(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
+
 function setFuero(f,el){
   currentFuero=f;
   document.querySelectorAll('.fuero-tab').forEach(t=>t.classList.remove('active'));
@@ -556,12 +642,12 @@ function setFuero(f,el){
   renderMetrics();renderTable();
 }
 
-// METRICS
 function fmtARS(n){
   const num=parseFloat(n)||0;
   if(num===0)return'—';
   return'$'+Math.round(num).toLocaleString('es-AR');
 }
+
 function renderMetrics(){
   const d=state[currentFuero];
   const total=d.length;
@@ -575,8 +661,8 @@ function renderMetrics(){
   `;
 }
 
-// TABLE
 function etapaBadge(e){return`<span class="badge ${ETAPA_CLASS[e]||'b-nd'}">${e||'—'}</span>`}
+
 function renderTable(){
   const d=state[currentFuero];
   const q=(document.getElementById('search').value||'').toLowerCase();
@@ -603,32 +689,24 @@ function renderTable(){
     </tr>`).join('');
 }
 
-// MODAL CAUSA
 function showMTab(id,el){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.modal-panel').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('mpanel-'+id).classList.add('active');
 }
+
 function openCausaModal(idx){
   editCausaIdx=(idx!==undefined)?idx:null;
   const d=state[currentFuero];
   const c=(editCausaIdx!==null)?d[editCausaIdx]:{};
   document.getElementById('modal-causa-title').textContent=(editCausaIdx!==null)?'Editar causa':'Nueva causa';
   document.getElementById('btn-delete-causa').style.display=(editCausaIdx!==null)?'block':'none';
-  document.getElementById('f-autos').value=c.autos||'';
-  document.getElementById('f-expte').value=c.expte||'';
-  document.getElementById('f-juzgado').value=c.juzgado||'';
+  ['autos','expte','juzgado','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','msg','msgMes'].forEach(f=>{
+    const el=document.getElementById('f-'+f);if(el)el.value=c[f]||'';
+  });
   document.getElementById('f-fuero').value=c.fuero||currentFuero;
   document.getElementById('f-etapa-m').value=c.etapa||'Demanda/Contestación';
-  document.getElementById('f-cel').value=c.cel||'';
-  document.getElementById('f-detalle').value=c.detalle||'';
-  document.getElementById('f-hacer').value=c.hacer||'';
-  document.getElementById('f-pruebas').value=c.pruebas||'';
-  document.getElementById('f-test').value=c.test||'';
-  document.getElementById('f-info').value=c.info||'';
-  document.getElementById('f-peri').value=c.peri||'';
-  document.getElementById('f-pend-prueba').value=c.pendPrueba||'';
   document.getElementById('f-monto-dem').value=c.montoDem||'';
   document.getElementById('f-fecha-dem').value=c.fechaDem||'';
   document.getElementById('f-monto-sent').value=c.montoSent||'';
@@ -637,14 +715,14 @@ function openCausaModal(idx){
   document.getElementById('f-cobro').value=c.cobro||'';
   document.getElementById('f-monto-cobrado').value=c.montoCobrado||'';
   document.getElementById('f-obs-fin').value=c.obsFin||'';
-  document.getElementById('f-msg').value=c.msg||'';
-  document.getElementById('f-msg-mes').value=c.msgMes||'';
   cuotasTemp=Array.isArray(c.cuotas)?JSON.parse(JSON.stringify(c.cuotas)):[];
   renderCuotas();
   showMTab('datos',document.querySelector('.modal-tab'));
   document.getElementById('modal-causa-bg').classList.add('open');
 }
+
 function closeCausaModal(){document.getElementById('modal-causa-bg').classList.remove('open');}
+
 function saveCausa(){
   const fuero=document.getElementById('f-fuero').value;
   const obj={
@@ -673,12 +751,12 @@ function saveCausa(){
     msgMes:document.getElementById('f-msg-mes').value,
   };
   const arr=state[fuero];
-  if(editCausaIdx!==null&&fuero===currentFuero){arr[editCausaIdx]=obj;}
-  else{arr.push(obj);}
+  if(editCausaIdx!==null&&fuero===currentFuero){arr[editCausaIdx]=obj;}else{arr.push(obj);}
   closeCausaModal();
   saveSheet(fuero==='laboral'?SHEET_LABORAL:SHEET_COMERCIAL,arr,CAUSAS_COLS);
   renderMetrics();renderTable();renderTotales();
 }
+
 function deleteCausa(){
   if(!confirm('¿Eliminar esta causa?'))return;
   state[currentFuero].splice(editCausaIdx,1);
@@ -687,7 +765,6 @@ function deleteCausa(){
   renderMetrics();renderTable();renderTotales();
 }
 
-// CUOTAS
 function renderCuotas(){
   document.getElementById('cuotas-list').innerHTML=cuotasTemp.map((c,i)=>`
     <div class="cuota-row">
@@ -703,39 +780,51 @@ function renderCuotas(){
 function addCuota(){cuotasTemp.push({desc:'',monto:'',estado:'pendiente'});renderCuotas();}
 function rmCuota(i){cuotasTemp.splice(i,1);renderCuotas();}
 
-// CALCULADORA
-function calcIntereses(monto,desde,hasta,tasa){
-  if(!monto||!desde||!hasta||!tasa)return null;
+// CALCULADORA - INTERES SIMPLE
+function calcInteresSimple(capital,desde,hasta,tasa,ipcPct){
+  if(!capital||!desde||!hasta||!tasa)return null;
   const d1=new Date(desde),d2=new Date(hasta);
-  const dias=Math.max(0,Math.round((d2-d1)/(1000*60*60*24)));
-  const meses=dias/30;
-  let factor=1;
-  if(tasa==='bna'){factor=Math.pow(1.06,meses);}
-  else if(tasa==='ipc'){const anual=1.0+1.06;factor=Math.pow(anual,meses/12);}
-  return monto*factor;
+  if(d2<=d1)return null;
+  const meses=((d2.getFullYear()-d1.getFullYear())*12)+(d2.getMonth()-d1.getMonth())+(d2.getDate()>=d1.getDate()?0:-1);
+  const mesesReal=Math.max(0,meses);
+  let tasaMensual=0;
+  if(tasa==='bna'){tasaMensual=0.06;}
+  else if(tasa==='ipc'){tasaMensual=(parseFloat(ipcPct)||0)/100;}
+  const intereses=capital*tasaMensual*mesesReal;
+  return{intereses,total:capital+intereses,meses:mesesReal,tasaMensual};
 }
+
 function calcular(){
   const m=parseFloat(document.getElementById('calc-monto').value)||0;
   const d=document.getElementById('calc-fecha').value;
   const h=document.getElementById('calc-hasta').value;
   const t=document.getElementById('calc-tasa').value;
-  const r=calcIntereses(m,d,h,t);
-  document.getElementById('calc-result').textContent=r?'$'+Math.round(r).toLocaleString('es-AR'):'—';
-  if(r&&m){
-    const pct=Math.round((r/m-1)*100);
-    document.getElementById('calc-note').textContent=`Intereses: ${fmtARS(r-m)} (+${pct}%)`;
+  const ipc=document.getElementById('calc-ipc').value;
+  document.getElementById('ipc-group').style.display=(t==='ipc')?'block':'none';
+  const r=calcInteresSimple(m,d,h,t,ipc);
+  if(r){
+    document.getElementById('calc-result').textContent='$'+Math.round(r.intereses).toLocaleString('es-AR');
+    document.getElementById('calc-total').textContent='$'+Math.round(r.total).toLocaleString('es-AR');
+    document.getElementById('calc-note').textContent=`${r.meses} meses × ${(r.tasaMensual*100).toFixed(2)}% mensual (interés simple)`;
+  } else {
+    document.getElementById('calc-result').textContent='—';
+    document.getElementById('calc-total').textContent='—';
+    document.getElementById('calc-note').textContent='Completá los campos para calcular';
   }
 }
+
 function mcalcular(){
   const m=parseFloat(document.getElementById('mcalc-monto').value)||0;
   const d=document.getElementById('mcalc-desde').value;
   const h=document.getElementById('mcalc-hasta').value;
   const t=document.getElementById('mcalc-tasa').value;
-  const r=calcIntereses(m,d,h,t);
-  document.getElementById('mcalc-result').textContent=r?'$'+Math.round(r).toLocaleString('es-AR'):'—';
+  const ipc=document.getElementById('mcalc-ipc').value;
+  document.getElementById('mipc-group').style.display=(t==='ipc')?'block':'none';
+  const r=calcInteresSimple(m,d,h,t,ipc);
+  document.getElementById('mcalc-result').textContent=r?'$'+Math.round(r.intereses).toLocaleString('es-AR'):'—';
+  document.getElementById('mcalc-total').textContent=r?'$'+Math.round(r.total).toLocaleString('es-AR'):'—';
 }
 
-// TOTALES
 function renderTotales(){
   const all=[...state.laboral,...state.comercial];
   const totalDem=all.reduce((s,c)=>s+(parseFloat(c.montoDem)||0),0);
@@ -764,18 +853,24 @@ function evClass(t){
   if(s.includes('factura'))return'ev-factura';
   return'ev-otro';
 }
-function fmtFecha(f,h){
+
+function fmtFecha(f){
   if(!f)return'';
-  try{
-    const d=new Date(f+'T00:00:00');
-    const ds=d.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-    return h?ds+' '+h:ds;
-  }catch{return f;}
+  try{const d=new Date(f+'T00:00:00');return d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch{return f;}
 }
+
+function getWeekRange(){
+  const now=new Date();
+  const day=now.getDay();
+  const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  return{start:mon.toISOString().slice(0,10),end:sun.toISOString().slice(0,10)};
+}
+
 function buildCalMeses(){
   const meses=new Set(state.eventos.map(e=>e.fecha?e.fecha.substring(0,7):'').filter(Boolean));
   const sel=document.getElementById('cal-mes');
-  sel.innerHTML='<option value="">Todos los meses</option>';
+  sel.innerHTML='<option value="">Filtrar por mes</option>';
   [...meses].sort().forEach(m=>{
     const[y,mo]=m.split('-');
     const opt=document.createElement('option');
@@ -783,40 +878,45 @@ function buildCalMeses(){
     sel.appendChild(opt);
   });
 }
+
 function renderCal(){
   const q=(document.getElementById('cal-search').value||'').toLowerCase();
   const tipo=document.getElementById('cal-tipo').value;
   const mes=document.getElementById('cal-mes').value;
+  const vista=document.getElementById('cal-vista').value;
+  const hoy=new Date().toISOString().slice(0,10);
+  const semana=getWeekRange();
+  const mesActual=hoy.substring(0,7);
+
   const evs=state.eventos.map((e,i)=>({...e,_i:i})).filter(e=>{
     if(q&&!(e.causa||'').toLowerCase().includes(q)&&!(e.tipo||'').toLowerCase().includes(q)&&!(e.obs||'').toLowerCase().includes(q))return false;
     if(tipo&&e.tipo!==tipo)return false;
     if(mes&&!(e.fecha||'').startsWith(mes))return false;
+    if(vista==='dia'&&e.fecha!==hoy)return false;
+    if(vista==='semana'&&(e.fecha<semana.start||e.fecha>semana.end))return false;
+    if(vista==='mes'&&!(e.fecha||'').startsWith(mesActual))return false;
     return true;
   }).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+
   const list=document.getElementById('event-list');
   if(!evs.length){list.innerHTML=`<div class="empty">No se encontraron eventos</div>`;return;}
   let html='';let lastDay='';
   evs.forEach(e=>{
     const day=e.fecha||'';
-    if(day!==lastDay){
-      html+=`<div class="day-separator">${fmtFecha(day)}</div>`;
-      lastDay=day;
-    }
+    if(day!==lastDay){html+=`<div class="day-separator">${fmtFecha(day)}</div>`;lastDay=day;}
+    const linkInfo=(e.evid||e.evpass)?`<div class="ev-obs" style="font-size:11px">${e.evid?'ID: '+e.evid:''} ${e.evpass?'| Pass: '+e.evpass:''}</div>`:'';
     html+=`<div class="event-card ${evClass(e.tipo)}">
-      <div class="ev-header">
-        <span class="ev-tipo">${e.tipo||'Evento'}</span>
-        <span class="ev-fecha">${e.hora||''}</span>
-      </div>
+      <div class="ev-header"><span class="ev-tipo">${e.tipo||'Evento'}</span><span class="ev-fecha">${e.hora||''}</span></div>
       <div class="ev-causa">${e.causa||'—'}</div>
       ${e.obs?`<div class="ev-obs">${e.obs}</div>`:''}
       ${e.link?`<div class="ev-link"><a href="${e.link}" target="_blank">Abrir videoconferencia</a></div>`:''}
-      <div class="ev-actions">
-        <button class="ev-btn" onclick="openEvModal(${e._i})">Editar</button>
-      </div>
+      ${linkInfo}
+      <div class="ev-actions"><button class="ev-btn" onclick="openEvModal(${e._i})">Editar</button></div>
     </div>`;
   });
   list.innerHTML=html;
 }
+
 function openEvModal(idx){
   editEvIdx=(idx!==undefined)?idx:null;
   const e=(editEvIdx!==null)?state.eventos[editEvIdx]:{};
@@ -827,19 +927,14 @@ function openEvModal(idx){
   document.getElementById('ev-hora').value=e.hora||'';
   document.getElementById('ev-causa').value=e.causa||'';
   document.getElementById('ev-link').value=e.link||'';
+  document.getElementById('ev-id').value=e.evid||'';
+  document.getElementById('ev-pass').value=e.evpass||'';
   document.getElementById('ev-obs').value=e.obs||'';
   document.getElementById('modal-ev-bg').classList.add('open');
 }
 function closeEvModal(){document.getElementById('modal-ev-bg').classList.remove('open');}
 function saveEv(){
-  const obj={
-    tipo:document.getElementById('ev-tipo').value,
-    fecha:document.getElementById('ev-fecha').value,
-    hora:document.getElementById('ev-hora').value,
-    causa:document.getElementById('ev-causa').value,
-    link:document.getElementById('ev-link').value,
-    obs:document.getElementById('ev-obs').value,
-  };
+  const obj={tipo:document.getElementById('ev-tipo').value,fecha:document.getElementById('ev-fecha').value,hora:document.getElementById('ev-hora').value,causa:document.getElementById('ev-causa').value,link:document.getElementById('ev-link').value,evid:document.getElementById('ev-id').value,evpass:document.getElementById('ev-pass').value,obs:document.getElementById('ev-obs').value};
   if(editEvIdx!==null){state.eventos[editEvIdx]=obj;}else{state.eventos.push(obj);}
   closeEvModal();
   saveSheet(SHEET_CAL,state.eventos,EV_COLS);
@@ -851,6 +946,105 @@ function deleteEv(){
   closeEvModal();
   saveSheet(SHEET_CAL,state.eventos,EV_COLS);
   buildCalMeses();renderCal();
+}
+
+// PENDIENTES
+function showSubTab(id,el){
+  currentSubTab=id;
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sub-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('spanel-'+id).classList.add('active');
+}
+
+function addPendRow(){
+  if(!state.pendientes[currentSubTab])state.pendientes[currentSubTab]=[];
+  if(currentSubTab==='negociacion')state.pendientes.negociacion.push({req:'',dem:'',seclo:'pendiente'});
+  else if(currentSubTab==='demanda')state.pendientes.demanda.push({req:'',dem:'',drive:''});
+  else if(currentSubTab==='prueba')state.pendientes.prueba.push({req:'',dem:'',doc:'no-aplica',inf:'no-aplica',test:'no-aplica',per:'no-aplica',docd:'no-aplica'});
+  else if(currentSubTab==='sortear')state.pendientes.sortear.push({req:'',dem:'',drive:''});
+  renderPendientes();
+  saveLocalPendientes();
+}
+
+function spOpts(val,field,idx,tab){
+  const opts=tab==='negociacion'?['pendiente','finalizado','no-aplica']:['completa','incompleta','no-aplica'];
+  return`<select onchange="state.pendientes['${tab}'][${idx}]['${field}']=this.value;saveLocalPendientes()" style="padding:5px 8px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px">
+    ${opts.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o.charAt(0).toUpperCase()+o.slice(1).replace('-',' ')}</option>`).join('')}
+  </select>`;
+}
+
+function spBadge(val){
+  const cls={finalizado:'sp-finalizado',pendiente:'sp-pendiente','no-aplica':'sp-no-aplica',completa:'sp-completa',incompleta:'sp-pendiente'}[val]||'sp-no-aplica';
+  return`<span class="status-pill ${cls}">${val}</span>`;
+}
+
+function renderPendientes(){
+  const neg=state.pendientes.negociacion||[];
+  const dem=state.pendientes.demanda||[];
+  const pru=state.pendientes.prueba||[];
+  const sor=state.pendientes.sortear||[];
+
+  document.getElementById('tb-negociacion').innerHTML=neg.map((r,i)=>`<tr>
+    <td><input value="${r.req||''}" onchange="state.pendientes.negociacion[${i}].req=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td><input value="${r.dem||''}" onchange="state.pendientes.negociacion[${i}].dem=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td>${spOpts(r.seclo||'pendiente','seclo',i,'negociacion')}</td>
+    <td><button class="btn-rm" onclick="state.pendientes.negociacion.splice(${i},1);saveLocalPendientes();renderPendientes()">×</button></td>
+  </tr>`).join('')||'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
+
+  document.getElementById('tb-demanda').innerHTML=dem.map((r,i)=>`<tr>
+    <td><input value="${r.req||''}" onchange="state.pendientes.demanda[${i}].req=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td><input value="${r.dem||''}" onchange="state.pendientes.demanda[${i}].dem=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td>${r.drive?`<a href="${r.drive}" target="_blank" style="color:#3b82f6;font-size:12px">Abrir Drive</a>`:''}<input value="${r.drive||''}" onchange="state.pendientes.demanda[${i}].drive=this.value;saveLocalPendientes()" placeholder="Link Drive..." style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;margin-top:4px"></td>
+    <td><button class="btn-rm" onclick="state.pendientes.demanda.splice(${i},1);saveLocalPendientes();renderPendientes()">×</button></td>
+  </tr>`).join('')||'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
+
+  document.getElementById('tb-prueba').innerHTML=pru.map((r,i)=>`<tr>
+    <td><input value="${r.req||''}" onchange="state.pendientes.prueba[${i}].req=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td><input value="${r.dem||''}" onchange="state.pendientes.prueba[${i}].dem=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td>${spOpts(r.doc||'no-aplica','doc',i,'prueba')}</td>
+    <td>${spOpts(r.inf||'no-aplica','inf',i,'prueba')}</td>
+    <td>${spOpts(r.test||'no-aplica','test',i,'prueba')}</td>
+    <td>${spOpts(r.per||'no-aplica','per',i,'prueba')}</td>
+    <td>${spOpts(r.docd||'no-aplica','docd',i,'prueba')}</td>
+    <td><button class="btn-rm" onclick="state.pendientes.prueba.splice(${i},1);saveLocalPendientes();renderPendientes()">×</button></td>
+  </tr>`).join('')||'<tr><td colspan="8" class="empty">Sin registros</td></tr>';
+
+  document.getElementById('tb-sortear').innerHTML=sor.map((r,i)=>`<tr>
+    <td><input value="${r.req||''}" onchange="state.pendientes.sortear[${i}].req=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td><input value="${r.dem||''}" onchange="state.pendientes.sortear[${i}].dem=this.value;saveLocalPendientes()" style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:13px"></td>
+    <td>${r.drive?`<a href="${r.drive}" target="_blank" style="color:#3b82f6;font-size:12px">Abrir Drive</a>`:''}<input value="${r.drive||''}" onchange="state.pendientes.sortear[${i}].drive=this.value;saveLocalPendientes()" placeholder="Link Drive..." style="width:100%;padding:6px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;margin-top:4px"></td>
+    <td><button class="btn-rm" onclick="state.pendientes.sortear.splice(${i},1);saveLocalPendientes();renderPendientes()">×</button></td>
+  </tr>`).join('')||'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
+}
+
+// NOTAS
+function addNota(){
+  if(!state.notas[currentUser])state.notas[currentUser]=[];
+  state.notas[currentUser].push({tarea:'',causa:'',deadline:'',status:'pendiente'});
+  renderNotas();
+  saveLocalNotas();
+}
+
+function renderNotas(){
+  const notas=state.notas[currentUser]||[];
+  const wrap=document.getElementById('notas-wrap');
+  if(!notas.length){wrap.innerHTML=`<div class="empty">No tenés tareas. Agregá una con el botón +</div>`;return;}
+  const statusColors={pendiente:'#fee2e2','en-curso':'#fef3c7','ver-juan':'#fef9c3',completado:'#d1fae5'};
+  const statusText={pendiente:'Pendiente','en-curso':'En curso','ver-juan':'Ver Juan',completado:'Completado'};
+  wrap.innerHTML=notas.map((n,i)=>`
+    <div class="nota-row" style="border-left:3px solid ${n.status==='pendiente'?'#e24b4a':n.status==='en-curso'?'#d97706':n.status==='ver-juan'?'#ca8a04':'#059669'}">
+      <input value="${n.tarea||''}" placeholder="Tarea pendiente..." onchange="state.notas['${currentUser}'][${i}].tarea=this.value;saveLocalNotas()">
+      <input value="${n.causa||''}" placeholder="Causa relacionada..." onchange="state.notas['${currentUser}'][${i}].causa=this.value;saveLocalNotas()">
+      <input type="date" value="${n.deadline||''}" onchange="state.notas['${currentUser}'][${i}].deadline=this.value;saveLocalNotas();renderNotas()">
+      <select onchange="state.notas['${currentUser}'][${i}].status=this.value;saveLocalNotas();renderNotas()" style="padding:6px 8px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;background:${statusColors[n.status]||'#fff'}">
+        <option value="pendiente" ${n.status==='pendiente'?'selected':''}>Pendiente</option>
+        <option value="en-curso" ${n.status==='en-curso'?'selected':''}>En curso</option>
+        <option value="ver-juan" ${n.status==='ver-juan'?'selected':''}>Ver Juan</option>
+        <option value="completado" ${n.status==='completado'?'selected':''}>Completado</option>
+      </select>
+      <button class="btn-rm" onclick="state.notas['${currentUser}'].splice(${i},1);saveLocalNotas();renderNotas()">×</button>
+    </div>`).join('');
 }
 </script>
 </body>
