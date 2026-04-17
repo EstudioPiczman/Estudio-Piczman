@@ -216,7 +216,7 @@ tr.data-row:hover td{background:#fafafa;cursor:pointer}
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showSec('causas',this)">Causas</button>
     <button class="nav-tab" onclick="showSec('calendario',this)">Calendario</button>
-    <button class="nav-tab" onclick="showSec('totales',this)">Totales</button>
+    <button class="nav-tab" onclick="showSec('totales',this)">$ Cobros</button>
     <button class="nav-tab" onclick="showSec('pendientes',this)">Pendientes</button>
     <button class="nav-tab" onclick="showSec('notas',this)">Notas</button>
   </div>
@@ -629,16 +629,24 @@ async function fetchSheet(sheet){
 }
 
 function fixDate(val){
-  if(!val)return'';
+  if(!val&&val!==0)return'';
   const s=String(val).trim();
   if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
   if(/^\d+(\.\d+)?$/.test(s)){
-    const n=parseFloat(s);
-    const d=new Date(Math.round((n-25569)*86400*1000));
+    const n=Math.floor(parseFloat(s));
+    const d=new Date(Date.UTC(1899,11,30));
+    d.setUTCDate(d.getUTCDate()+n);
     return d.toISOString().slice(0,10);
   }
-  const d=new Date(s);
-  if(!isNaN(d))return d.toISOString().slice(0,10);
+  if(s.includes('/')){
+    const parts=s.split('/');
+    if(parts.length===3){
+      const[a,b,c]=parts;
+      if(c.length===4)return`${c}-${b.padStart(2,'0')}-${a.padStart(2,'0')}`;
+      if(a.length===4)return`${a}-${b.padStart(2,'0')}-${c.padStart(2,'0')}`;
+    }
+  }
+  try{const d=new Date(s);if(!isNaN(d))return d.toISOString().slice(0,10);}catch(e){}
   return s;
 }
 function parseSheet(rows,cols){
