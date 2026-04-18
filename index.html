@@ -293,9 +293,37 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
 
 <!-- COBROS -->
 <div class="section" id="sec-totales">
-  <div class="section-title" style="margin-bottom:1.25rem">Resumen financiero</div>
+  <div class="section-title" style="margin-bottom:1.25rem">$ Cobros</div>
   <div class="totales-grid" id="totales-grid"></div>
-  <div class="calc-box">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;margin-top:1.5rem">
+    <div style="font-family:'DM Serif Text',serif;font-size:17px;color:#2F4F56">Registro de cobros</div>
+    <div style="display:flex;gap:6px">
+      <button class="cobros-tab active" id="ctab-cobrar" onclick="setCobrosTab('cobrar',this)" style="padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #d4c9be;background:#2F4F56;color:#F2EAE1;font-family:'Montserrat',sans-serif">Por cobrar</button>
+      <button class="cobros-tab" id="ctab-cobrado" onclick="setCobrosTab('cobrado',this)" style="padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #d4c9be;background:#fff;color:#758B8F;font-family:'Montserrat',sans-serif">Cobrado</button>
+      <button class="cobros-tab" id="ctab-sinsentencia" onclick="setCobrosTab('sinsentencia',this)" style="padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #d4c9be;background:#fff;color:#758B8F;font-family:'Montserrat',sans-serif">Sin sentencia</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:#758B8F;margin-bottom:0.75rem" id="cobros-desc"></div>
+
+  <div class="table-wrap" style="overflow-x:auto">
+    <table style="table-layout:auto;min-width:900px">
+      <thead><tr>
+        <th style="min-width:220px">Autos</th>
+        <th style="min-width:120px">Monto reclamado</th>
+        <th style="min-width:100px">Tasa</th>
+        <th style="min-width:120px">Honorarios (40%)</th>
+        <th style="min-width:110px">Estado cobro</th>
+        <th style="min-width:110px">Fecha cobro</th>
+        <th style="min-width:80px">Embargo</th>
+        <th style="min-width:80px">Cuotas</th>
+        <th style="min-width:40px"></th>
+      </tr></thead>
+      <tbody id="tb-cobros"></tbody>
+    </table>
+  </div>
+
+  <div class="calc-box" style="margin-top:1.5rem">
     <h4>Calculadora de intereses</h4>
     <div style="margin-bottom:10px">
       <a class="tasa-link" href="https://tasas.cpacf.org.ar/index" target="_blank">🔗 Tasas CPACF — Usuario: 36148690 | Tomo: 122 | Folio: 547</a>
@@ -317,6 +345,21 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
     <div class="calc-result" style="margin-top:8px"><div><div class="calc-result-label">Capital + Intereses</div></div><div class="calc-result-value" id="calc-total" style="font-size:18px">—</div></div>
     <div class="calc-note" style="margin-top:8px">* Interés simple = capital × tasa mensual × meses. Verificar tasas en CPACF.</div>
   </div>
+</div>
+
+<!-- MODAL CUOTAS COBRO -->
+<div class="modal-bg" id="modal-cuotas-bg" onclick="if(event.target===this)document.getElementById('modal-cuotas-bg').classList.remove('open')">
+<div class="modal" style="max-width:560px">
+  <div class="modal-header">
+    <h2 id="modal-cuotas-title">Cuotas</h2>
+    <button class="modal-close" onclick="document.getElementById('modal-cuotas-bg').classList.remove('open')">×</button>
+  </div>
+  <div id="modal-cuotas-body"></div>
+  <div class="modal-footer">
+    <button class="btn-add-cuota" onclick="addCuotaCobro()">+ Agregar cuota</button>
+    <button class="btn-save" onclick="saveCuotasCobro()">Guardar</button>
+  </div>
+</div>
 </div>
 
 <!-- PENDIENTES -->
@@ -385,12 +428,29 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
 <div class="section" id="sec-notas">
   <div class="section-header">
     <span class="section-title" id="notas-title">Mis notas</span>
-    <button class="btn-primary" onclick="addNota()">+ Nueva tarea</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="notas-filtro-status" onchange="renderNotas()" style="padding:7px 11px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#2F4F56;font-size:13px;font-family:'Montserrat',sans-serif">
+        <option value="">Todos los status</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en-curso">En curso</option>
+        <option value="ver-juan">Ver Juan</option>
+        <option value="completado">Completado</option>
+      </select>
+      <select id="notas-filtro-fecha" onchange="renderNotas()" style="padding:7px 11px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#2F4F56;font-size:13px;font-family:'Montserrat',sans-serif">
+        <option value="">Todos los deadlines</option>
+        <option value="hoy">Hoy</option>
+        <option value="semana">Esta semana</option>
+        <option value="mes">Este mes</option>
+        <option value="vencidos">Vencidos</option>
+      </select>
+      <div class="view-toggle">
+        <button class="view-btn active" id="nbtn-lista" onclick="setNotasView('lista')">☰ Lista</button>
+        <button class="view-btn" id="nbtn-cards" onclick="setNotasView('cards')">⊞ Cards</button>
+      </div>
+      <button class="btn-primary" onclick="addNota()">+ Nueva tarea</button>
+    </div>
   </div>
-  <div class="notas-container">
-    <div class="nota-header"><span>Tarea pendiente</span><span>Causa relacionada</span><span>Deadline</span><span>Status</span><span></span></div>
-    <div class="notas-body" id="notas-body"></div>
-  </div>
+  <div id="notas-container-wrap"></div>
 </div>
 </div>
 
@@ -572,7 +632,7 @@ async function loadAll(){
     state.comercial=parseSheet(cyc,CAUSAS_COLS);
     state.eventos=parseSheet(cal,EV_COLS);
     loadLocal();buildCalMeses();buildCausasList();
-    renderMetrics();renderTable();renderCal();renderTotales();renderPendientes();renderNotas();renderArchivo();
+    renderMetrics();renderTable();renderCal();renderTotales();renderCobros();renderPendientes();renderNotas();renderArchivo();
     setSync('saved','Sincronizado');setTimeout(()=>setSync('','Listo'),2000);
   }catch(e){setSync('error','Error al cargar');loadLocal();renderMetrics();renderTable();renderCal();renderTotales();renderPendientes();renderNotas();}
 }
@@ -704,7 +764,7 @@ function saveCausa(){
   const obj={autos:document.getElementById('f-autos').value,expte:document.getElementById('f-expte').value,juzgado:document.getElementById('f-juzgado').value,etapa:document.getElementById('f-etapa-m').value,cel:document.getElementById('f-cel').value,detalle:document.getElementById('f-detalle').value,hacer:document.getElementById('f-hacer').value,pruebas:document.getElementById('f-pruebas').value,test:document.getElementById('f-test').value,info:document.getElementById('f-info').value,peri:document.getElementById('f-peri').value,pendPrueba:document.getElementById('f-pend-prueba').value,montoDem:document.getElementById('f-monto-dem').value,fechaDem:document.getElementById('f-fecha-dem').value,montoSent:document.getElementById('f-monto-sent').value,fechaSent:document.getElementById('f-fecha-sent').value,tasa:document.getElementById('f-tasa').value,cobro:document.getElementById('f-cobro').value,montoCobrado:document.getElementById('f-monto-cobrado').value,obsFin:document.getElementById('f-obs-fin').value,cuotas:cuotasTemp,msg:document.getElementById('f-msg').value,msgMes:document.getElementById('f-msg-mes').value};
   const arr=state[fuero==='laboral'?'laboral':'comercial'];
   if(editCausaIdx!==null&&fuero===currentFuero)arr[editCausaIdx]=obj;else arr.push(obj);
-  arr.sort((a,b)=>(a.autos||'').localeCompare(b.autos||'','es'));
+  arr.sort((a,b)=>(a.autos||'').localeCompare(b.autos||'','es',{sensitivity:'base'}));
   closeCausaModal();saveSheet(fuero==='laboral'?SHEET_LABORAL:SHEET_COMERCIAL,arr,CAUSAS_COLS);
   renderMetrics();renderTable();renderTotales();buildCausasList();
 }
@@ -944,28 +1004,165 @@ function renderArchivo(){
     </tr>`;
   }).join('');
 }
+// COBROS
+let cuotasCobroTemp=[];let cobroIdx=null;let cobroFuero='laboral';
+
+function renderCobros(){
+  const fuero=document.getElementById('cobros-fuero').value;
+  const filtro=document.getElementById('cobros-filtro').value;
+  const src=fuero==='cautelares'?[]:state[fuero==='laboral'?'laboral':'comercial']||[];
+  const rows=src.filter(c=>{
+    if(!filtro)return true;
+    const cb=c.cobro||'';
+    if(filtro==='pendiente')return cb.includes('Pendiente');
+    if(filtro==='parcial')return cb.includes('parcialmente');
+    if(filtro==='total')return cb.includes('totalmente');
+    return true;
+  });
+  const tasaNombre={bna:'Tasa BNA',ipc:'IPC simple','':"—"};
+  const tb=document.getElementById('tb-cobros');
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="9" class="empty">No hay causas en esta sección</td></tr>`;return;}
+  tb.innerHTML=rows.map((c,i)=>{
+    const hon=c.montoSent?'
+checkSession();
+</script>
+</body>
+</html>
++Math.round(parseFloat(c.montoSent)*0.4).toLocaleString('es-AR'):'—';
+    const cuotasArr=Array.isArray(c.cuotas)?c.cuotas:[];
+    const cuotasLabel=cuotasArr.length?`${cuotasArr.filter(q=>q.estado==='pagada').length}/${cuotasArr.length} pagadas`:'Sin cuotas';
+    const estadoCobro=c.cobro||'—';
+    const estadoColor=estadoCobro.includes('totalmente')?'#059669':estadoCobro.includes('parcialmente')?'#d97706':estadoCobro.includes('Pendiente')?'#e24b4a':'#758B8F';
+    return`<tr>
+      <td style="font-weight:600;font-size:12px">${c.autos||'—'}</td>
+      <td style="font-size:12px">${c.montoDem?'
+checkSession();
+</script>
+</body>
+</html>
++Math.round(parseFloat(c.montoDem)).toLocaleString('es-AR'):'—'}</td>
+      <td><span style="font-size:11px;background:#e8e0d8;padding:2px 7px;border-radius:10px;color:#2F4F56">${tasaNombre[c.tasa]||'—'}</span></td>
+      <td style="font-size:12px;font-weight:600;color:#2F4F56">${c.montoSent?hon:'—'}</td>
+      <td><span style="font-size:11px;font-weight:600;color:${estadoColor}">${estadoCobro}</span></td>
+      <td><input type="date" value="${c.fechaCobro||''}" onchange="updateCausa(${i},'${fuero}','fechaCobro',this.value)" style="padding:4px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px"></td>
+      <td style="text-align:center">
+        <select onchange="updateCausa(${i},'${fuero}','embargo',this.value)" style="padding:4px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:${c.embargo==='si'?'#fee2e2':'#fff'}">
+          <option value="no" ${c.embargo!=='si'?'selected':''}>No</option>
+          <option value="si" ${c.embargo==='si'?'selected':''}>Sí</option>
+        </select>
+      </td>
+      <td><button onclick="openCuotasCobro(${i},'${fuero}')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:'Montserrat',sans-serif">${cuotasLabel}</button></td>
+      <td><button onclick="openCausaModal(${i})" style="padding:4px 8px;border:none;background:none;cursor:pointer;color:#758B8F;font-size:13px">›</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateCausa(idx,fuero,field,val){
+  const arr=state[fuero==='laboral'?'laboral':'comercial'];
+  if(arr[idx])arr[idx][field]=val;
+  saveSheet(fuero==='laboral'?SHEET_LABORAL:SHEET_COMERCIAL,arr,CAUSAS_COLS);
+}
+
+function openCuotasCobro(idx,fuero){
+  cobroIdx=idx;cobroFuero=fuero;
+  const arr=state[fuero==='laboral'?'laboral':'comercial'];
+  const c=arr[idx];
+  cuotasCobroTemp=Array.isArray(c.cuotas)?JSON.parse(JSON.stringify(c.cuotas)):[];
+  document.getElementById('modal-cuotas-title').textContent=`Cuotas — ${c.autos}`;
+  renderCuotasCobro();
+  document.getElementById('modal-cuotas-bg').classList.add('open');
+}
+function renderCuotasCobro(){
+  const body=document.getElementById('modal-cuotas-body');
+  if(!cuotasCobroTemp.length){body.innerHTML='<div class="empty">Sin cuotas. Agregá con el botón de abajo.</div>';return;}
+  let html='<div style="display:flex;flex-direction:column;gap:8px">';
+  cuotasCobroTemp.forEach((c,i)=>{
+    const bg=c.estado==='pagada'?'#d1fae5':'#fee2e2';
+    html+=`<div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr auto;gap:8px;align-items:center;padding:8px;background:#faf7f4;border-radius:8px">
+      <input value="${(c.desc||'Cuota '+(i+1)).replace(/"/g,'')}" onchange="cuotasCobroTemp[${i}].desc=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">
+      <input type="number" value="${c.monto||''}" placeholder="Monto ARS" onchange="cuotasCobroTemp[${i}].monto=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">
+      <select onchange="cuotasCobroTemp[${i}].estado=this.value;renderCuotasCobro()" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:${bg}">
+        <option value="pendiente" ${c.estado!=='pagada'?'selected':''}>Pendiente</option>
+        <option value="pagada" ${c.estado==='pagada'?'selected':''}>Pagada</option>
+      </select>
+      <button class="btn-rm" onclick="cuotasCobroTemp.splice(${i},1);renderCuotasCobro()">x</button>
+    </div>`;
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+function addCuotaCobro(){cuotasCobroTemp.push({desc:'',monto:'',estado:'pendiente'});renderCuotasCobro();}
+function saveCuotasCobro(){
+  const arr=state[cobroFuero==='laboral'?'laboral':'comercial'];
+  if(arr[cobroIdx])arr[cobroIdx].cuotas=cuotasCobroTemp;
+  saveSheet(cobroFuero==='laboral'?SHEET_LABORAL:SHEET_COMERCIAL,arr,CAUSAS_COLS);
+  document.getElementById('modal-cuotas-bg').classList.remove('open');
+  renderCobros();
+}
+
+// NOTAS con vista y filtros
+let notasView='lista';
+function setNotasView(v){
+  notasView=v;
+  document.getElementById('nbtn-lista').classList.toggle('active',v==='lista');
+  document.getElementById('nbtn-cards').classList.toggle('active',v==='cards');
+  renderNotas();
+}
 function addNota(){
   if(!state.notas[currentUser])state.notas[currentUser]=[];
   state.notas[currentUser].push({tarea:'',causa:'',deadline:'',status:'pendiente'});
   renderNotas();saveNotas();
 }
 function renderNotas(){
-  const notas=state.notas[currentUser]||[];
-  const body=document.getElementById('notas-body');
-  if(!notas.length){body.innerHTML=`<div class="empty">No tenés tareas. Agregá una con + Nueva tarea</div>`;return;}
+  const hoy=new Date().toISOString().slice(0,10);
+  const semana=getWeekRange();
+  const mesActual=hoy.substring(0,7);
+  const filtroStatus=document.getElementById('notas-filtro-status')?.value||'';
+  const filtroFecha=document.getElementById('notas-filtro-fecha')?.value||'';
+  const wrap=document.getElementById('notas-container-wrap');
+  let notas=(state.notas[currentUser]||[]).map((n,i)=>({...n,_i:i}));
+  if(filtroStatus)notas=notas.filter(n=>n.status===filtroStatus);
+  if(filtroFecha==='hoy')notas=notas.filter(n=>n.deadline===hoy);
+  else if(filtroFecha==='semana')notas=notas.filter(n=>n.deadline>=semana.start&&n.deadline<=semana.end);
+  else if(filtroFecha==='mes')notas=notas.filter(n=>n.deadline&&n.deadline.startsWith(mesActual));
+  else if(filtroFecha==='vencidos')notas=notas.filter(n=>n.deadline&&n.deadline<hoy&&n.status!=='completado');
+  if(!notas.length){wrap.innerHTML=`<div class="empty">No hay tareas con esos filtros.</div>`;return;}
   const sc={pendiente:'#e24b4a','en-curso':'#d97706','ver-juan':'#ca8a04',completado:'#059669'};
-  body.innerHTML=notas.map((n,i)=>`<div class="nota-item" style="border-left:4px solid ${sc[n.status]||'#d4c9be'}">
-    <input value="${(n.tarea||'').replace(/"/g,'&quot;')}" placeholder="Tarea pendiente..." onchange="state.notas['${currentUser}'][${i}].tarea=this.value;saveNotas()">
-    <input value="${(n.causa||'').replace(/"/g,'&quot;')}" placeholder="Causa relacionada..." list="causas-list" onchange="state.notas['${currentUser}'][${i}].causa=this.value;saveNotas()">
-    <input type="date" value="${n.deadline||''}" onchange="state.notas['${currentUser}'][${i}].deadline=this.value;saveNotas();renderNotas()">
-    <select class="nota-status-sel" style="background:${sc[n.status]+'22'};border-color:${sc[n.status]};color:${sc[n.status]}" onchange="state.notas['${currentUser}'][${i}].status=this.value;saveNotas();renderNotas()">
-      <option value="pendiente" ${n.status==='pendiente'?'selected':''}>Pendiente</option>
-      <option value="en-curso" ${n.status==='en-curso'?'selected':''}>En curso</option>
-      <option value="ver-juan" ${n.status==='ver-juan'?'selected':''}>Ver Juan</option>
-      <option value="completado" ${n.status==='completado'?'selected':''}>Completado</option>
-    </select>
-    <button class="btn-rm" onclick="state.notas['${currentUser}'].splice(${i},1);saveNotas();renderNotas()">×</button>
-  </div>`).join('');
+  const statusLabel={pendiente:'Pendiente','en-curso':'En curso','ver-juan':'Ver Juan',completado:'Completado'};
+  if(notasView==='lista'){
+    wrap.innerHTML=`<div class="notas-container">
+      <div class="nota-header"><span>Tarea pendiente</span><span>Causa relacionada</span><span>Deadline</span><span>Status</span><span></span></div>
+      <div class="notas-body">${notas.map(n=>`<div class="nota-item" style="border-left:4px solid ${sc[n.status]||'#d4c9be'}">
+        <input value="${(n.tarea||'').replace(/"/g,'&quot;')}" placeholder="Tarea pendiente..." onchange="state.notas['${currentUser}'][${n._i}].tarea=this.value;saveNotas()">
+        <input value="${(n.causa||'').replace(/"/g,'&quot;')}" placeholder="Causa relacionada..." list="causas-list" onchange="state.notas['${currentUser}'][${n._i}].causa=this.value;saveNotas()">
+        <input type="date" value="${n.deadline||''}" onchange="state.notas['${currentUser}'][${n._i}].deadline=this.value;saveNotas();renderNotas()">
+        <select class="nota-status-sel" style="background:${sc[n.status]+'22'};border-color:${sc[n.status]};color:${sc[n.status]}" onchange="state.notas['${currentUser}'][${n._i}].status=this.value;saveNotas();renderNotas()">
+          <option value="pendiente" ${n.status==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="en-curso" ${n.status==='en-curso'?'selected':''}>En curso</option>
+          <option value="ver-juan" ${n.status==='ver-juan'?'selected':''}>Ver Juan</option>
+          <option value="completado" ${n.status==='completado'?'selected':''}>Completado</option>
+        </select>
+        <button class="btn-rm" onclick="state.notas['${currentUser}'].splice(${n._i},1);saveNotas();renderNotas()">×</button>
+      </div>`).join('')}</div>
+    </div>`;
+  } else {
+    const grupos={pendiente:[],  'en-curso':[],'ver-juan':[],completado:[]};
+    notas.forEach(n=>{if(grupos[n.status])grupos[n.status].push(n);});
+    wrap.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+      ${Object.entries(grupos).map(([st,items])=>`
+        <div style="background:#fff;border:1px solid #d4c9be;border-radius:12px;overflow:hidden">
+          <div style="background:${sc[st]};padding:10px 14px;color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${statusLabel[st]} <span style="opacity:.7">(${items.length})</span></div>
+          <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+            ${items.length?items.map(n=>`<div style="background:#faf7f4;border-radius:8px;padding:10px;border-left:3px solid ${sc[n.status]}">
+              <div style="font-weight:600;font-size:13px;margin-bottom:4px">${n.tarea||'Sin título'}</div>
+              ${n.causa?`<div style="font-size:11px;color:#758B8F;margin-bottom:4px">${n.causa}</div>`:''}
+              ${n.deadline?`<div style="font-size:11px;color:${n.deadline<new Date().toISOString().slice(0,10)?'#e24b4a':'#758B8F'}">${n.deadline}</div>`:''}
+              <button class="btn-rm" style="margin-top:6px" onclick="state.notas['${currentUser}'].splice(${n._i},1);saveNotas();renderNotas()">×</button>
+            </div>`).join(''):`<div style="color:#758B8F;font-size:12px;padding:8px">Sin tareas</div>`}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
 }
 checkSession();
 </script>
