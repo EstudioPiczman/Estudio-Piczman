@@ -54,8 +54,7 @@ th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:#758B8
 td{padding:10px 12px;font-size:13px;border-bottom:1px dashed #e8e0d8;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr.data-row:hover td{background:#faf7f4;cursor:pointer}
-.col-autos{width:25%}.col-expte{width:10%}.col-juz{width:12%}.col-etapa{width:10%}
-.col-monto{width:10%}.col-detalle{width:22%}.col-hacer{width:8%}.col-acc{width:3%}
+.col-autos{width:35%}.col-expte{width:12%}.col-juz{width:13%}.col-etapa{width:13%}.col-detalle{width:27%}
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .b-dc{background:#dbeafe;color:#1e40af}.b-tl{background:#ede9fe;color:#5b21b6}
 .b-pr{background:#fef3c7;color:#92400e}.b-st{background:#d1fae5;color:#065f46}
@@ -64,6 +63,13 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
 .hacer-tag{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .monto-cell{font-size:12px;font-weight:600;color:#2F4F56}
 .detail-text{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#758B8F;line-height:1.4}
+.detail-panel-row td{background:#f5f0eb!important;padding:0!important}
+.detail-panel-inner{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border-top:2px solid #2F4F56}
+.detail-panel-item label{font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
+.detail-panel-item .val{font-size:13px;color:#2F4F56;font-weight:500}
+.detail-panel-item .val.hacer{background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:8px;display:inline-block;font-size:12px}
+.detail-panel-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed #d4c9be}
+tr.data-row.expanded td{background:#f5f0eb}
 .empty{padding:3rem;text-align:center;color:#758B8F;font-size:13px}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(47,79,86,0.5);z-index:200;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
 .modal-bg.open{display:flex}
@@ -274,10 +280,11 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th class="col-autos">Carátula</th><th class="col-expte">Expediente</th>
-        <th class="col-juz">Juzgado</th><th class="col-etapa">Etapa</th>
-        <th class="col-monto">Monto demanda</th><th class="col-detalle">Último movimiento</th>
-        <th class="col-hacer">Pendiente</th><th class="col-acc"></th>
+        <th class="col-autos">Carátula</th>
+        <th class="col-expte">Expediente</th>
+        <th class="col-juz">Juzgado</th>
+        <th class="col-etapa">Etapa</th>
+        <th class="col-detalle">Último movimiento</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -553,7 +560,13 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
         </select>
       </div>
       <div class="form-group"><label>Celular cliente</label><input id="f-cel" type="text"></div>
-      <div class="form-group full"><label>Link Drive <span style="font-size:10px;color:#a0b4b8;font-weight:400;text-transform:none">(carpeta o archivo del caso)</span></label><input id="f-drive" type="text" placeholder="https://drive.google.com/..."></div>
+      <div class="form-group full">
+        <label>Link Drive <span style="font-size:10px;color:#a0b4b8;font-weight:400;text-transform:none">(carpeta o archivo del caso)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="f-drive" type="text" placeholder="https://drive.google.com/..." style="flex:1" oninput="updateDriveBtn()">
+          <a id="f-drive-btn" href="#" target="_blank" onclick="return openDriveLink()" title="Abrir Drive" style="padding:9px 12px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#758B8F;text-decoration:none;font-size:14px;white-space:nowrap;display:none">🔗 Abrir</a>
+        </div>
+      </div>
       <div class="form-group full"><label>Último movimiento / detalle</label><textarea id="f-detalle"></textarea></div>
       <div class="form-group full"><label>Para hacer (pendientes)</label><textarea id="f-hacer" style="min-height:52px"></textarea></div>
     </div>
@@ -922,6 +935,46 @@ function tasaDefaultPct(tasa) {
   return '';
 }
 
+// CAUSA TABLE DETAIL PANEL
+function toggleDetailPanel(row, idx) {
+  // If clicking a link inside the row, ignore
+  if (event && event.target && event.target.tagName === 'A') return;
+  const d = state[currentFuero];
+  const c = d[idx];
+  const nextRow = row.nextElementSibling;
+  // Toggle off if already open
+  if (nextRow && nextRow.classList.contains('detail-panel-row')) {
+    nextRow.remove();
+    row.classList.remove('expanded');
+    return;
+  }
+  // Close any other open panels
+  document.querySelectorAll('.detail-panel-row').forEach(function(r) { r.remove(); });
+  document.querySelectorAll('.data-row.expanded').forEach(function(r) { r.classList.remove('expanded'); });
+  row.classList.add('expanded');
+  const tr = document.createElement('tr');
+  tr.className = 'detail-panel-row';
+  const hasMonto = c.montoDem || c.montoSent;
+  const hasPend = c.hacer && c.hacer.trim();
+  const driveBtn = c.drive
+    ? '<a href="' + c.drive + '" target="_blank" style="padding:5px 12px;border:1px solid #d4c9be;border-radius:7px;font-size:12px;background:#fff;color:#2F4F56;text-decoration:none;display:inline-flex;align-items:center;gap:5px">🔗 Abrir Drive</a>'
+    : '<span style="color:#d4c9be;font-size:12px">Sin link de Drive</span>';
+  tr.innerHTML = '<td colspan="5"><div class="detail-panel-inner">' +
+    '<div class="detail-panel-item"><label>Monto demanda</label><div class="val">' + (c.montoDem ? fmtARS(c.montoDem) : '—') + '</div>' +
+    (c.montoSent ? '<div style="margin-top:4px"><label>Monto sentencia</label><div class="val">' + fmtARS(c.montoSent) + '</div></div>' : '') +
+    '</div>' +
+    '<div class="detail-panel-item"><label>Para hacer</label><div class="val' + (hasPend?' hacer':'') + '">' + (hasPend ? c.hacer : '—') + '</div>' +
+    (c.cel ? '<div style="margin-top:8px"><label>Celular cliente</label><div class="val"><a href="https://wa.me/54' + c.cel.replace(/\D/g,'') + '" target="_blank" style="color:#059669">📱 ' + c.cel + '</a></div></div>' : '') +
+    '</div>' +
+    '<div class="detail-panel-item"><label>Drive</label>' + driveBtn + '</div>' +
+    '</div>' +
+    '<div class="detail-panel-actions" style="padding:0 16px 12px">' +
+    '<button onclick="openCausaModal(' + idx + ')" style="padding:6px 16px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:\'Montserrat\',sans-serif">✏️ Editar causa</button>' +
+    '</div>' +
+    '</td>';
+  row.parentNode.insertBefore(tr, row.nextSibling);
+}
+
 // CAUSAS
 function renderMetrics() {
   const d = state[currentFuero];
@@ -951,18 +1004,17 @@ function renderTable() {
     return true;
   });
   const tb = document.getElementById('tbody');
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">No se encontraron causas</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">No se encontraron causas</td></tr>'; return; }
   tb.innerHTML = rows.map(function(c) {
-    const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
-    return '<tr class="data-row" onclick="openCausaModal(' + c._i + ')">' +
-      '<td class="col-autos" style="font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">' + c.autos + driveIco + '</span></td>' +
-      '<td class="col-expte" style="color:#758B8F;font-size:12px">' + c.expte + '</td>' +
-      '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'') + '</td>' +
+    const driveIco = c.drive
+      ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>'
+      : '';
+    return '<tr class="data-row" onclick="toggleDetailPanel(this,' + c._i + ')" ondblclick="openCausaModal(' + c._i + ')">' +
+      '<td class="col-autos"><span style="font-weight:600">' + c.autos + '</span>' + driveIco + '</td>' +
+      '<td class="col-expte" style="color:#758B8F;font-size:12px">' + (c.expte||'—') + '</td>' +
+      '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'—') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
-      '<td class="col-monto">' + (c.montoDem ? '<span class="monto-cell">' + fmtARS(c.montoDem) + '</span>' : '<span style="color:#ccc">—</span>') + '</td>' +
       '<td class="col-detalle"><span class="detail-text">' + (c.detalle||'—') + '</span></td>' +
-      '<td class="col-hacer">' + (c.hacer && c.hacer.trim() ? '<span class="hacer-tag">' + c.hacer + '</span>' : '') + '</td>' +
-      '<td class="col-acc" style="text-align:center;color:#d4c9be">›</td>' +
       '</tr>';
   }).join('');
 }
@@ -995,8 +1047,26 @@ function openCausaModal(idx) {
   document.getElementById('f-obs-fin').value = c.obsFin || '';
   cuotasTemp = Array.isArray(c.cuotas) ? JSON.parse(JSON.stringify(c.cuotas)) : [];
   renderCuotas();
+  updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
   document.getElementById('modal-causa-bg').classList.add('open');
+}
+function updateDriveBtn() {
+  const inp = document.getElementById('f-drive');
+  const btn = document.getElementById('f-drive-btn');
+  if (!inp || !btn) return;
+  const url = inp.value.trim();
+  if (url && url.startsWith('http')) {
+    btn.href = url;
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+function openDriveLink() {
+  const url = document.getElementById('f-drive').value.trim();
+  if (url) window.open(url, '_blank');
+  return false;
 }
 function closeCausaModal() { document.getElementById('modal-causa-bg').classList.remove('open'); }
 function saveCausa() {
