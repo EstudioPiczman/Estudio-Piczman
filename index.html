@@ -572,12 +572,46 @@ tr.data-row.expanded td{background:#f5f0eb}
     </div>
   </div>
   <div class="modal-panel" id="mpanel-prueba">
-    <div class="form-grid">
-      <div class="form-group full"><label>Pruebas ofrecidas</label><input id="f-pruebas" type="text"></div>
-      <div class="form-group full"><label>Detalle testimonial</label><textarea id="f-test"></textarea></div>
-      <div class="form-group full"><label>Detalle informativa</label><textarea id="f-info"></textarea></div>
-      <div class="form-group full"><label>Detalle pericial</label><textarea id="f-peri"></textarea></div>
-      <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
+    <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+      <!-- OFICIOS -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Oficios</label>
+          <button onclick="addOficio()" class="btn-add-cuota" style="margin-top:0">+ Agregar oficio</button>
+        </div>
+        <div style="display:grid;grid-template-columns:60px 1.8fr 1fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">N°</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Destinatario</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. enviado</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. recibido</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Estado</span>
+          <span></span>
+        </div>
+        <div id="oficios-list" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+
+      <!-- TESTIGOS -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Testigos</label>
+          <button onclick="addTestigo()" class="btn-add-cuota" style="margin-top:0">+ Agregar testigo</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Nombre</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fecha declaración</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Estado</span>
+          <span></span>
+        </div>
+        <div id="testigos-list" style="display:flex;flex-direction:column;gap:5px"></div>
+      </div>
+
+      <!-- RESTO -->
+      <div class="form-grid">
+        <div class="form-group full"><label>Pruebas ofrecidas (resumen)</label><input id="f-pruebas" type="text"></div>
+        <div class="form-group full"><label>Detalle pericial</label><textarea id="f-peri"></textarea></div>
+        <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
+      </div>
     </div>
   </div>
   <div class="modal-panel" id="mpanel-montos">
@@ -693,6 +727,7 @@ let cobrosTabActual = 'cobrar';
 let notasView = 'lista';
 let calGridYear = new Date().getFullYear(), calGridMonth = new Date().getMonth();
 let notasArchivoVisible = false;
+let oficiosTemp = [], testigosTemp = [];
 
 // AUTH
 function doLogin() {
@@ -824,12 +859,13 @@ function fixHora(val) {
     const m = totalMin % 60;
     return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
   }
-  // ISO string tipo "1899-12-30T15:00:00.000Z" — Apps Script en timezone Argentina (UTC-3)
+  // ISO string tipo "1899-12-30T16:00:00.000Z" — Apps Script serializa en UTC+4 respecto a Argentina
+  // Casos confirmados: T16:16Z → usuario espera 12:00 → offset = 4
   if (s.includes('T')) {
     try {
       const d = new Date(s);
       if (!isNaN(d)) {
-        let h = d.getUTCHours() - 3;
+        let h = d.getUTCHours() - 4;
         if (h < 0) h += 24;
         const m = d.getUTCMinutes();
         return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
@@ -1046,6 +1082,20 @@ function openCausaModal(idx) {
   document.getElementById('f-monto-cobrado').value = c.montoCobrado || '';
   document.getElementById('f-obs-fin').value = c.obsFin || '';
   cuotasTemp = Array.isArray(c.cuotas) ? JSON.parse(JSON.stringify(c.cuotas)) : [];
+  // Load oficios - parse from c.info field (JSON) or set defaults for new causa
+  try { oficiosTemp = c.info ? JSON.parse(c.info) : []; if (!Array.isArray(oficiosTemp)) throw 0; }
+  catch(e) { oficiosTemp = []; }
+  if (editCausaIdx === null || oficiosTemp.length === 0) {
+    oficiosTemp = [
+      {dest:'Correo Argentino', fsEnv:'', fsRec:'', estado:'pendiente'},
+      {dest:'ARCA / AFIP',      fsEnv:'', fsRec:'', estado:'pendiente'}
+    ];
+  }
+  // Load testigos - parse from c.test field (JSON) or legacy
+  try { testigosTemp = c.test ? JSON.parse(c.test) : []; if (!Array.isArray(testigosTemp)) throw 0; }
+  catch(e) { testigosTemp = []; }
+  renderOficios();
+  renderTestigos();
   renderCuotas();
   updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
@@ -1080,8 +1130,8 @@ function saveCausa() {
     detalle: document.getElementById('f-detalle').value,
     hacer: document.getElementById('f-hacer').value,
     pruebas: document.getElementById('f-pruebas').value,
-    test: document.getElementById('f-test').value,
-    info: document.getElementById('f-info').value,
+    test: JSON.stringify(testigosTemp),
+    info: JSON.stringify(oficiosTemp),
     peri: document.getElementById('f-peri').value,
     pendPrueba: document.getElementById('f-pend-prueba').value,
     montoDem: document.getElementById('f-monto-dem').value,
@@ -1132,6 +1182,63 @@ function renderCuotas() {
 }
 function addCuota() { cuotasTemp.push({ desc:'', monto:'', estado:'pendiente' }); renderCuotas(); }
 function rmCuota(i) { cuotasTemp.splice(i, 1); renderCuotas(); }
+
+// OFICIOS & TESTIGOS
+const OFICIO_ESTADOS = ['pendiente','enviado','recibido','respondido','no-aplica'];
+const TESTIGO_ESTADOS = ['pendiente','declaró','no-declaró','no-aplica'];
+
+function renderOficios() {
+  const el = document.getElementById('oficios-list');
+  if (!el) return;
+  if (!oficiosTemp.length) {
+    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin oficios. Usá el botón para agregar.</div>';
+    return;
+  }
+  const stColors = {'pendiente':'#fef3c7','enviado':'#dbeafe','recibido':'#d1fae5','respondido':'#d1fae5','no-aplica':'#f3f4f6'};
+  el.innerHTML = oficiosTemp.map(function(o, i) {
+    const bg = stColors[o.estado] || '#faf7f4';
+    return '<div style="display:grid;grid-template-columns:60px 1.8fr 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+      '<span style="font-size:11px;font-weight:700;color:#758B8F;text-align:center">#' + (i+1) + '</span>' +
+      '<input value="' + (o.dest||'').replace(/"/g,'&quot;') + '" placeholder="Destinatario..." onchange="oficiosTemp['+i+'].dest=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (o.fsEnv||'') + '" placeholder="Fs. enviado" onchange="oficiosTemp['+i+'].fsEnv=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (o.fsRec||'') + '" placeholder="Fs. recibido" onchange="oficiosTemp['+i+'].fsRec=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<select onchange="oficiosTemp['+i+'].estado=this.value;renderOficios()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
+        OFICIO_ESTADOS.map(function(s) { return '<option value="'+s+'"'+(o.estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join('') +
+      '</select>' +
+      '<button class="btn-rm" onclick="oficiosTemp.splice('+i+',1);renderOficios()">×</button>' +
+      '</div>';
+  }).join('');
+}
+
+function renderTestigos() {
+  const el = document.getElementById('testigos-list');
+  if (!el) return;
+  if (!testigosTemp.length) {
+    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Usá el botón para agregar.</div>';
+    return;
+  }
+  const stColors = {'pendiente':'#fef3c7','declaró':'#d1fae5','no-declaró':'#fee2e2','no-aplica':'#f3f4f6'};
+  el.innerHTML = testigosTemp.map(function(t, i) {
+    const bg = stColors[t.estado] || '#faf7f4';
+    return '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+      '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input type="date" value="' + (t.fecha||'') + '" onchange="testigosTemp['+i+'].fecha=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">' +
+      '<select onchange="testigosTemp['+i+'].estado=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
+        TESTIGO_ESTADOS.map(function(s) { return '<option value="'+s+'"'+(t.estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join('') +
+      '</select>' +
+      '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">×</button>' +
+      '</div>';
+  }).join('');
+}
+
+function addOficio() {
+  oficiosTemp.push({dest:'', fsEnv:'', fsRec:'', estado:'pendiente'});
+  renderOficios();
+}
+function addTestigo() {
+  testigosTemp.push({nombre:'', fecha:'', estado:'pendiente'});
+  renderTestigos();
+}
 
 // CALCULADORA
 function calcInteresSimple(capital, desde, hasta, tasa, ipcPct) {
