@@ -173,18 +173,18 @@ tr.data-row.expanded td{background:#f5f0eb}
 .nota-status-sel{padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:'Montserrat',sans-serif;cursor:pointer;outline:none;font-weight:600}
 .cobros-tab{padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #d4c9be;font-family:'Montserrat',sans-serif}
 /* CALENDAR GRID */
-.cal-grid-wrap{background:#fff;border:1px solid #d4c9be;border-radius:12px;overflow:hidden}
-.cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);background:#faf7f4;border-bottom:2px solid #e8e0d8}
+.cal-grid-wrap{border:1px solid #d4c9be;border-radius:12px;overflow:hidden;background:#d4c9be}
+.cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);background:#faf7f4;border-bottom:2px solid #d4c9be}
 .cal-grid-header span{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;border-right:1px solid #e8e0d8}
 .cal-grid-header span:last-child{border-right:none}
-.cal-grid-body{display:grid;grid-template-columns:repeat(7,1fr);background:#d4c9be;gap:1px;border-top:1px solid #d4c9be}
-.cal-day{min-height:90px;padding:5px 6px;position:relative;background:#fff;cursor:pointer}
-.cal-day:hover{background:#faf7f4}
+.cal-grid-body{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#d4c9be}
+.cal-day{min-height:100px;padding:5px 6px;position:relative;background:#fff;cursor:pointer;overflow:hidden}
+.cal-day:hover{background:#fafafa}
 .cal-day.other-month{background:#f7f3ef}
 .cal-day.other-month:hover{background:#f0ebe4}
 .cal-day.today{background:#f0f7f8}
 .cal-day.today .cal-day-num{background:#2F4F56;color:#F2EAE1;border-radius:50%}
-.cal-day-num{font-size:12px;font-weight:600;color:#2F4F56;margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-day-num{font-size:12px;font-weight:600;color:#2F4F56;margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .cal-ev-pill{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;display:block}
 .cal-ev-pill:hover{opacity:.75}
 .cal-more{font-size:10px;color:#758B8F;padding:1px 4px;cursor:pointer}
@@ -333,6 +333,7 @@ tr.data-row.expanded td{background:#f5f0eb}
     </div>
   </div>
   <div class="event-list" id="event-list"></div>
+  <div id="hora-debug" style="display:none;margin-top:1rem;background:#1e1e1e;color:#6ee7b7;border-radius:8px;padding:1rem;font-size:11px;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
   <div id="cal-grid-container" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
       <div style="display:flex;align-items:center;gap:10px">
@@ -799,7 +800,14 @@ async function loadAll() {
     const [lab, cyc, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAL)]);
     state.laboral = parseSheet(lab, CAUSAS_COLS);
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
+    window._horaDebug = [];
     state.eventos = parseSheet(cal, EV_COLS);
+    // Show debug panel
+    const dbg = document.getElementById('hora-debug');
+    if (dbg && window._horaDebug.length) {
+      dbg.style.display = 'block';
+      dbg.textContent = '=== RAW HORA VALUES FROM SHEETS ===\n' + window._horaDebug.join('\n');
+    }
     loadLocal();
     buildCalMeses();
     buildCausasList();
@@ -905,7 +913,14 @@ function parseSheet(rows, cols) {
     cols.forEach(function(c, i) {
       let v = r[i] || '';
       if (c === 'fecha') v = fixDate(v);
-      if (c === 'hora') v = fixHora(v);
+      if (c === 'hora') {
+        const raw = String(r[i] || '');
+        // Log raw hora values to console so we can see what format arrives
+        if (raw && raw !== '') console.log('RAW HORA:', JSON.stringify(raw), '=> fixHora:', fixHora(raw));
+        // Also collect for debug panel
+        if (raw && raw !== '' && window._horaDebug) window._horaDebug.push('RAW: ' + JSON.stringify(raw) + '  =>  ' + fixHora(raw));
+        v = fixHora(v);
+      }
       obj[c] = v;
     });
     if (obj.cuotas && typeof obj.cuotas === 'string') {
