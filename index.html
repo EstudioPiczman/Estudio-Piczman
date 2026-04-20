@@ -177,9 +177,9 @@ tr.data-row.expanded td{background:#f5f0eb}
 .cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);background:#faf7f4;border-bottom:2px solid #e8e0d8}
 .cal-grid-header span{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em}
 .cal-grid-body{display:grid;grid-template-columns:repeat(7,1fr)}
-.cal-day{min-height:90px;border-right:1px solid #e8e0d8;border-bottom:1px solid #e8e0d8;padding:4px;position:relative}
+.cal-day{min-height:90px;border-right:1px dotted #d4c9be;border-bottom:1px dotted #d4c9be;padding:4px;position:relative;background:#fff}
 .cal-day:nth-child(7n){border-right:none}
-.cal-day.other-month{background:#faf7f4;opacity:.6}
+.cal-day.other-month{background:#faf7f4}
 .cal-day.today .cal-day-num{background:#2F4F56;color:#F2EAE1;border-radius:50%}
 .cal-day-num{font-size:12px;font-weight:600;color:#2F4F56;margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .cal-ev-pill{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;display:block}
@@ -574,13 +574,19 @@ tr.data-row.expanded td{background:#f5f0eb}
   <div class="modal-panel" id="mpanel-prueba">
     <div style="display:flex;flex-direction:column;gap:1.25rem">
 
-      <!-- OFICIOS -->
+      <!-- RESUMEN PRUEBA OFRECIDA -->
+      <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
+        <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px">Prueba ofrecida — resumen</label>
+        <input id="f-pruebas" type="text" placeholder="Ej: Documental, Testimonial, Informativa, Pericial Contable..." style="width:100%;padding:9px 11px;border:1px solid #d4c9be;border-radius:8px;font-size:13px;font-family:'Montserrat',sans-serif;outline:none;background:#fff;color:#2F4F56">
+      </div>
+
+      <!-- OFICIOS (informativa) -->
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Oficios</label>
+          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Informativa — Oficios</label>
           <button onclick="addOficio()" class="btn-add-cuota" style="margin-top:0">+ Agregar oficio</button>
         </div>
-        <div style="display:grid;grid-template-columns:60px 1.8fr 1fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+        <div style="display:grid;grid-template-columns:44px 1.8fr 1fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">N°</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Destinatario</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. enviado</span>
@@ -591,27 +597,38 @@ tr.data-row.expanded td{background:#f5f0eb}
         <div id="oficios-list" style="display:flex;flex-direction:column;gap:5px"></div>
       </div>
 
-      <!-- TESTIGOS -->
+      <!-- TESTIGOS (testimonial) -->
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Testigos</label>
+          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Testimonial — Testigos</label>
           <button onclick="addTestigo()" class="btn-add-cuota" style="margin-top:0">+ Agregar testigo</button>
         </div>
-        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Nombre</span>
-          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fecha declaración</span>
-          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Estado</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. designación</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Observaciones / declaró</span>
           <span></span>
         </div>
         <div id="testigos-list" style="display:flex;flex-direction:column;gap:5px"></div>
       </div>
 
-      <!-- RESTO -->
-      <div class="form-grid">
-        <div class="form-group full"><label>Pruebas ofrecidas (resumen)</label><input id="f-pruebas" type="text"></div>
-        <div class="form-group full"><label>Detalle pericial</label><textarea id="f-peri"></textarea></div>
-        <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
+      <!-- PERICIAL -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Pericial</label>
+          <button onclick="addPericial()" class="btn-add-cuota" style="margin-top:0">+ Agregar otra</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Tipo</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. perito designado</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. pericial presentada</span>
+          <span></span>
+        </div>
+        <div id="pericial-list" style="display:flex;flex-direction:column;gap:5px"></div>
       </div>
+
+      <!-- PENDIENTES -->
+      <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
     </div>
   </div>
   <div class="modal-panel" id="mpanel-montos">
@@ -637,24 +654,21 @@ tr.data-row.expanded td{background:#f5f0eb}
   </div>
   <div class="modal-panel" id="mpanel-mensajes">
     <div class="form-grid">
-      <div class="form-group full"><label>Último mensaje enviado al cliente</label><textarea id="f-msg" style="min-height:100px"></textarea></div>
-      <div class="form-group"><label>Último mes de contacto</label><input id="f-msg-mes" type="text" placeholder="Ej: abril 2026"></div>
-      <div class="form-group full">
-        <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Calculadora rápida</label>
-        <div class="calc-box" style="margin-top:0.5rem">
-          <a class="tasa-link" href="https://tasas.cpacf.org.ar/index" target="_blank">🔗 Tasas CPACF — Usuario: 36148690 | Tomo: 122 | Folio: 547</a>
-          <div class="calc-grid" style="margin-top:10px">
-            <div class="form-group"><label>Capital</label><input type="number" id="mcalc-monto" placeholder="0" oninput="mcalcular()"></div>
-            <div class="form-group"><label>Desde</label><input type="date" id="mcalc-desde" oninput="mcalcular()"></div>
-            <div class="form-group"><label>Tasa</label>
-              <select id="mcalc-tasa" onchange="mcalcular()"><option value="">—</option><option value="bna">Tasa BNA</option><option value="ipc">IPC simple</option></select>
-            </div>
-            <div class="form-group"><label>Hasta</label><input type="date" id="mcalc-hasta" oninput="mcalcular()"></div>
-            <div class="form-group" id="mipc-group" style="display:none"><label>% IPC mensual</label><input type="number" id="mcalc-ipc" placeholder="Ej: 3.5" step="0.01" oninput="mcalcular()"></div>
-          </div>
-          <div class="calc-result"><div><div class="calc-result-label">Intereses</div></div><div class="calc-result-value" id="mcalc-result">—</div></div>
-          <div class="calc-result" style="margin-top:8px"><div><div class="calc-result-label">Capital + Intereses</div></div><div class="calc-result-value" id="mcalc-total" style="font-size:18px">—</div></div>
-        </div>
+      <div class="form-group full"><label>Último mensaje enviado al cliente</label><textarea id="f-msg" style="min-height:120px"></textarea></div>
+      <div class="form-group">
+        <label>Último mes de contacto</label>
+        <select id="f-msg-mes" style="padding:9px 11px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#2F4F56;font-size:13px;outline:none;font-family:'Montserrat',sans-serif">
+          <option value="">— Sin contacto —</option>
+          <option>Enero 2026</option><option>Febrero 2026</option><option>Marzo 2026</option>
+          <option>Abril 2026</option><option>Mayo 2026</option><option>Junio 2026</option>
+          <option>Julio 2026</option><option>Agosto 2026</option><option>Septiembre 2026</option>
+          <option>Octubre 2026</option><option>Noviembre 2026</option><option>Diciembre 2026</option>
+          <option disabled>──────</option>
+          <option>Enero 2025</option><option>Febrero 2025</option><option>Marzo 2025</option>
+          <option>Abril 2025</option><option>Mayo 2025</option><option>Junio 2025</option>
+          <option>Julio 2025</option><option>Agosto 2025</option><option>Septiembre 2025</option>
+          <option>Octubre 2025</option><option>Noviembre 2025</option><option>Diciembre 2025</option>
+        </select>
       </div>
     </div>
   </div>
@@ -727,7 +741,7 @@ let cobrosTabActual = 'cobrar';
 let notasView = 'lista';
 let calGridYear = new Date().getFullYear(), calGridMonth = new Date().getMonth();
 let notasArchivoVisible = false;
-let oficiosTemp = [], testigosTemp = [];
+let oficiosTemp = [], testigosTemp = [], pericialTemp = [];
 
 // AUTH
 function doLogin() {
@@ -843,32 +857,28 @@ function fixDate(val) {
 function fixHora(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
-  // Ya está en formato HH:MM
+  // Ya en formato HH:MM
   if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5,'0');
-  // DD/MM/YYYY HH:MM:SS — formato que manda Apps Script cuando la celda tiene fecha+hora
+  // DD/MM/YYYY HH:MM:SS — Apps Script cuando la celda es DateTime (Argentina local)
   const dtMatch = s.match(/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/);
-  if (dtMatch) {
-    return String(parseInt(dtMatch[1])).padStart(2,'0') + ':' + dtMatch[2];
-  }
+  if (dtMatch) return String(parseInt(dtMatch[1])).padStart(2,'0') + ':' + dtMatch[2];
+  // Apps Script Date.toString() = "Mon Feb 18 2026 12:00:00 GMT-0300 ..."
+  const tsMatch = s.match(/\d{4}\s+(\d{2}):(\d{2}):\d{2}\s+GMT/);
+  if (tsMatch) return tsMatch[1] + ':' + tsMatch[2];
   // Número decimal puro (fracción del día)
-  if (/^0?\.\d+$/.test(s) || /^\d+\.\d+$/.test(s)) {
-    const f = parseFloat(s);
-    const frac = f - Math.floor(f);
+  if (/^0?\.\d+$/.test(s) || (/^\d+\.\d+$/.test(s) && parseFloat(s) < 2)) {
+    const f = parseFloat(s), frac = f - Math.floor(f);
     const totalMin = Math.round(frac * 1440);
-    const h = Math.floor(totalMin / 60) % 24;
-    const m = totalMin % 60;
-    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    return String(Math.floor(totalMin/60)%24).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
   }
-  // ISO string tipo "1899-12-30T16:00:00.000Z" — Apps Script serializa en UTC+4 respecto a Argentina
-  // Casos confirmados: T16:16Z → usuario espera 12:00 → offset = 4
+  // ISO string — Argentina es UTC-3, Apps Script serializa en UTC
   if (s.includes('T')) {
     try {
       const d = new Date(s);
       if (!isNaN(d)) {
-        let h = d.getUTCHours() - 4;
+        let h = d.getUTCHours() - 3;
         if (h < 0) h += 24;
-        const m = d.getUTCMinutes();
-        return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        return String(h).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
       }
     } catch(e) {}
   }
@@ -1094,8 +1104,18 @@ function openCausaModal(idx) {
   // Load testigos - parse from c.test field (JSON) or legacy
   try { testigosTemp = c.test ? JSON.parse(c.test) : []; if (!Array.isArray(testigosTemp)) throw 0; }
   catch(e) { testigosTemp = []; }
+  // Load pericial - parse from c.peri field (JSON)
+  try { pericialTemp = c.peri ? JSON.parse(c.peri) : []; if (!Array.isArray(pericialTemp)) throw 0; }
+  catch(e) { pericialTemp = []; }
+  if (editCausaIdx === null || pericialTemp.length === 0) {
+    pericialTemp = [
+      {tipo:'Pericial Contable',    fsDesig:'', fsPresent:''},
+      {tipo:'Pericial Informática', fsDesig:'', fsPresent:''}
+    ];
+  }
   renderOficios();
   renderTestigos();
+  renderPericial();
   renderCuotas();
   updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
@@ -1132,7 +1152,7 @@ function saveCausa() {
     pruebas: document.getElementById('f-pruebas').value,
     test: JSON.stringify(testigosTemp),
     info: JSON.stringify(oficiosTemp),
-    peri: document.getElementById('f-peri').value,
+    peri: JSON.stringify(pericialTemp),
     pendPrueba: document.getElementById('f-pend-prueba').value,
     montoDem: document.getElementById('f-monto-dem').value,
     fechaDem: document.getElementById('f-fecha-dem').value,
@@ -1185,7 +1205,7 @@ function rmCuota(i) { cuotasTemp.splice(i, 1); renderCuotas(); }
 
 // OFICIOS & TESTIGOS
 const OFICIO_ESTADOS = ['pendiente','enviado','recibido','respondido','no-aplica'];
-const TESTIGO_ESTADOS = ['pendiente','declaró','no-declaró','no-aplica'];
+const TESTIGO_ESTADOS = ['pendiente','declaró','incompareció'];
 
 function renderOficios() {
   const el = document.getElementById('oficios-list');
@@ -1217,15 +1237,11 @@ function renderTestigos() {
     el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Usá el botón para agregar.</div>';
     return;
   }
-  const stColors = {'pendiente':'#fef3c7','declaró':'#d1fae5','no-declaró':'#fee2e2','no-aplica':'#f3f4f6'};
   el.innerHTML = testigosTemp.map(function(t, i) {
-    const bg = stColors[t.estado] || '#faf7f4';
-    return '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input type="date" value="' + (t.fecha||'') + '" onchange="testigosTemp['+i+'].fecha=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">' +
-      '<select onchange="testigosTemp['+i+'].estado=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
-        TESTIGO_ESTADOS.map(function(s) { return '<option value="'+s+'"'+(t.estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join('') +
-      '</select>' +
+      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Fojas designación" onchange="testigosTemp['+i+'].fojas=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Ej: declaró 12/03, no designada..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
       '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">×</button>' +
       '</div>';
   }).join('');
@@ -1236,8 +1252,29 @@ function addOficio() {
   renderOficios();
 }
 function addTestigo() {
-  testigosTemp.push({nombre:'', fecha:'', estado:'pendiente'});
+  testigosTemp.push({nombre:'', fojas:'', obs:''});
   renderTestigos();
+}
+
+function renderPericial() {
+  const el = document.getElementById('pericial-list');
+  if (!el) return;
+  if (!pericialTemp.length) {
+    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin pericias.</div>';
+    return;
+  }
+  el.innerHTML = pericialTemp.map(function(p, i) {
+    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+      '<input value="' + (p.tipo||'').replace(/"/g,'&quot;') + '" placeholder="Tipo de pericia..." onchange="pericialTemp['+i+'].tipo=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (p.fsDesig||'').replace(/"/g,'&quot;') + '" placeholder="Fs. designado" onchange="pericialTemp['+i+'].fsDesig=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (p.fsPresent||'').replace(/"/g,'&quot;') + '" placeholder="Fs. presentada" onchange="pericialTemp['+i+'].fsPresent=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<button class="btn-rm" onclick="pericialTemp.splice('+i+',1);renderPericial()">×</button>' +
+      '</div>';
+  }).join('');
+}
+function addPericial() {
+  pericialTemp.push({tipo:'', fsDesig:'', fsPresent:''});
+  renderPericial();
 }
 
 // CALCULADORA
@@ -1835,8 +1872,8 @@ function renderCalGrid() {
     'ev-escrito':'#d97706','ev-demanda':'#059669','ev-comercial':'#db2777',
     'ev-art80':'#0891b2','ev-recordatorio':'#f59e0b','ev-factura':'#6366f1','ev-otro':'#758B8F'
   };
-  // Total cells: enough rows
-  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+  // Always render 6 full rows (42 cells) so the grid is always complete
+  const totalCells = 42;
   let html = '';
   for (let cell = 0; cell < totalCells; cell++) {
     const dayNum = cell - startOffset + 1;
@@ -1859,8 +1896,9 @@ function renderCalGrid() {
     }
     const isToday = dateStr === hoy;
     const dayEvs = evMap[dateStr] || [];
+    const numStyle = isOther ? 'color:#c0b8b0' : '';
     html += '<div class="cal-day' + (isOther?' other-month':'') + (isToday?' today':'') + '" onclick="calDayClick(event,\'' + dateStr + '\')" title="Click para agregar evento">';
-    html += '<div class="cal-day-num">' + displayNum + '</div>';
+    html += '<div class="cal-day-num" style="' + numStyle + '">' + displayNum + '</div>';
     const maxShow = 3;
     dayEvs.slice(0, maxShow).forEach(function(e) {
       const cls = evClass(e.tipo);
