@@ -166,6 +166,28 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
 .nota-item input{padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px;background:#fff;color:#2F4F56;font-family:'Montserrat',sans-serif;outline:none;width:100%}
 .nota-status-sel{padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:'Montserrat',sans-serif;cursor:pointer;outline:none;font-weight:600}
 .cobros-tab{padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #d4c9be;font-family:'Montserrat',sans-serif}
+/* CALENDAR GRID */
+.cal-grid-wrap{background:#fff;border:1px solid #d4c9be;border-radius:12px;overflow:hidden}
+.cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);background:#faf7f4;border-bottom:2px solid #e8e0d8}
+.cal-grid-header span{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em}
+.cal-grid-body{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:90px;border-right:1px solid #e8e0d8;border-bottom:1px solid #e8e0d8;padding:4px;position:relative}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day.other-month{background:#faf7f4;opacity:.6}
+.cal-day.today .cal-day-num{background:#2F4F56;color:#F2EAE1;border-radius:50%}
+.cal-day-num{font-size:12px;font-weight:600;color:#2F4F56;margin-bottom:3px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-ev-pill{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;display:block}
+.cal-ev-pill:hover{opacity:.75}
+.cal-more{font-size:10px;color:#758B8F;padding:1px 4px;cursor:pointer}
+.cal-grid-nav button{background:none;border:1px solid #d4c9be;border-radius:6px;padding:4px 12px;cursor:pointer;color:#2F4F56;font-size:16px;line-height:1}
+/* DRIVE ICON */
+.drive-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:3px;border:1px solid #d4c9be;color:#758B8F;text-decoration:none;font-size:10px;vertical-align:middle;margin-left:5px;flex-shrink:0;background:#fff}
+.drive-icon:hover{background:#e8e0d8;border-color:#2F4F56;color:#2F4F56}
+/* CUOTA GRID 5col */
+.cuota-row{display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1fr auto;gap:6px;align-items:center}
+.cuota-row input,.cuota-row select{padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:#fff;color:#2F4F56}
+/* NOTAS ARCHIVO */
+.notas-arch-wrap{background:#fff;border:1px solid #d4c9be;border-radius:12px;overflow:hidden;margin-top:1rem}
 </style>
 </head>
 <body>
@@ -287,11 +309,28 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
       <div class="view-toggle">
         <button class="view-btn" id="vbtn-list" onclick="setCalView('list')">☰ Lista</button>
         <button class="view-btn active" id="vbtn-cards" onclick="setCalView('cards')">⊞ Cards</button>
+        <button class="view-btn" id="vbtn-grid" onclick="setCalView('grid')">📅 Mes</button>
       </div>
       <button class="btn-primary" onclick="openEvModal()">+ Nuevo evento</button>
     </div>
   </div>
   <div class="event-list" id="event-list"></div>
+  <div id="cal-grid-container" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="cal-grid-nav" onclick="moveCalGrid(-1)" style="background:none;border:1px solid #d4c9be;border-radius:6px;padding:4px 12px;cursor:pointer;color:#2F4F56;font-size:16px;line-height:1">‹</button>
+        <span id="cal-grid-title" style="font-family:'DM Serif Text',serif;font-size:20px;color:#2F4F56;min-width:200px;text-align:center"></span>
+        <button class="cal-grid-nav" onclick="moveCalGrid(1)" style="background:none;border:1px solid #d4c9be;border-radius:6px;padding:4px 12px;cursor:pointer;color:#2F4F56;font-size:16px;line-height:1">›</button>
+      </div>
+      <button onclick="calGridHoy()" style="padding:5px 14px;border:1px solid #d4c9be;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;color:#2F4F56;font-family:'Montserrat',sans-serif">Hoy</button>
+    </div>
+    <div class="cal-grid-wrap">
+      <div class="cal-grid-header">
+        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="cal-grid-body" id="cal-grid-body"></div>
+    </div>
+  </div>
 </div>
 
 <!-- COBROS -->
@@ -318,7 +357,7 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
       <thead><tr>
         <th style="min-width:220px">Autos</th>
         <th style="min-width:120px">Monto reclamado</th>
-        <th style="min-width:100px">Tasa</th>
+        <th style="min-width:90px">Tasa %/mes</th>
         <th style="min-width:120px">Honorarios (40%)</th>
         <th style="min-width:110px">Estado cobro</th>
         <th style="min-width:110px">Fecha cobro</th>
@@ -454,12 +493,28 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
         <button class="view-btn active" id="nbtn-lista" onclick="setNotasView('lista')">☰ Lista</button>
         <button class="view-btn" id="nbtn-cards" onclick="setNotasView('cards')">⊞ Cards</button>
       </div>
+      <button onclick="toggleNotasArchivo()" id="btn-notas-arch-toggle" style="padding:6px 12px;border:1px solid #d4c9be;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;color:#758B8F;font-family:'Montserrat',sans-serif">📁 Completadas</button>
       <button class="btn-primary" onclick="addNota()">+ Nueva tarea</button>
     </div>
   </div>
   <div id="notas-container-wrap"></div>
-</div>
-</div>
+  <div id="notas-archivo-section" style="margin-top:1.5rem;display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+      <div style="font-family:'DM Serif Text',serif;font-size:17px;color:#2F4F56">📁 Completadas</div>
+      <button onclick="toggleNotasArchivo()" id="btn-notas-arch" style="padding:5px 12px;border:1px solid #d4c9be;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;color:#758B8F;font-family:'Montserrat',sans-serif">Ocultar</button>
+    </div>
+    <div class="notas-arch-wrap">
+      <table style="width:100%;border-collapse:collapse;table-layout:auto">
+        <thead><tr style="background:#faf7f4;border-bottom:2px solid #e8e0d8">
+          <th style="padding:8px 14px;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;text-align:left">Tarea</th>
+          <th style="padding:8px 14px;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;text-align:left">Causa</th>
+          <th style="padding:8px 14px;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;text-align:left">Deadline</th>
+          <th style="padding:8px 14px;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em;text-align:left">Acción</th>
+        </tr></thead>
+        <tbody id="tb-notas-archivo"></tbody>
+      </table>
+    </div>
+  </div>
 
 <!-- MODAL CAUSA -->
 <div class="modal-bg" id="modal-causa-bg" onclick="if(event.target===this)closeCausaModal()">
@@ -495,6 +550,7 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
         </select>
       </div>
       <div class="form-group"><label>Celular cliente</label><input id="f-cel" type="text"></div>
+      <div class="form-group full"><label>Link Drive <span style="font-size:10px;color:#a0b4b8;font-weight:400;text-transform:none">(carpeta o archivo del caso)</span></label><input id="f-drive" type="text" placeholder="https://drive.google.com/..."></div>
       <div class="form-group full"><label>Último movimiento / detalle</label><textarea id="f-detalle"></textarea></div>
       <div class="form-group full"><label>Para hacer (pendientes)</label><textarea id="f-hacer" style="min-height:52px"></textarea></div>
     </div>
@@ -611,7 +667,7 @@ const ETAPA_CLASS = {
   'Sentencia':'b-st','Ejecución':'b-ej','Conciliado':'b-co',
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
-const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes'];
+const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
 const EV_COLS = ['tipo','fecha','hora','causa','link','obs'];
 
 let state = { laboral:[], comercial:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
@@ -619,6 +675,8 @@ let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp 
 let cuotasCobroTemp = [], cobroIdx = null, cobroFuero = 'laboral';
 let cobrosTabActual = 'cobrar';
 let notasView = 'lista';
+let calGridYear = new Date().getFullYear(), calGridMonth = new Date().getMonth();
+let notasArchivoVisible = false;
 
 // AUTH
 function doLogin() {
@@ -734,22 +792,30 @@ function fixDate(val) {
 }
 
 // FIX: hora correcta desde Google Sheets
-// Sheets envía la hora como fracción decimal (ej: 0.5 = 12:00)
-// O como string ISO tipo "1899-12-30T16:16:48.000Z" donde hay que restar 4h UTC para obtener la hora argentina
+// Sheets puede enviar:
+//   1) String ISO: "1899-12-30T16:16:48.000Z" → la hora real es UTCHours - 4
+//   2) Fracción decimal: 0.5 = mediodía → multiplicar × 1440 minutos
+//   3) String HH:MM ya correcto
 function fixHora(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
-  // Formato HH:MM ya correcto
-  if (/^\d{1,2}:\d{2}/.test(s)) return s.slice(0, 5);
-  // Número decimal (fracción del día) — ej: 0.5 = 12:00
-  if (/^\d+(\.\d+)?$/.test(s)) {
+  // Ya está en formato HH:MM
+  if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5,'0');
+  // Número decimal puro (fracción del día desde Sheets)
+  // Ej: 0.5 = 12:00, 0.458333 = 11:00
+  if (/^0?\.\d+$/.test(s) || /^\d+\.\d+$/.test(s)) {
     const f = parseFloat(s);
-    const totalMin = Math.round(f * 24 * 60);
+    // Solo tomar la parte fraccionaria (ignora días)
+    const frac = f - Math.floor(f);
+    const totalMin = Math.round(frac * 1440);
     const h = Math.floor(totalMin / 60) % 24;
     const m = totalMin % 60;
     return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
   }
-  // ISO string tipo "1899-12-30T16:16:48.000Z" — restar 4h UTC para obtener hora Argentina
+  // ISO string tipo "1899-12-30T16:16:48.000Z"
+  // La hora en UTC tiene un offset fijo de +4h respecto a lo guardado
+  // (Sheets serializa en UTC+0 pero el valor ingresado era hora local Argentina UTC-3)
+  // Casos conocidos: T16:16 → 12:00, T15:16 → 11:00, T14:00 → 10:00
   if (s.includes('T')) {
     try {
       const d = new Date(s);
@@ -823,6 +889,42 @@ function fmtARS(n) {
   if (num === 0) return '—';
   return '$' + Math.round(num).toLocaleString('es-AR');
 }
+// Formatea número para mostrar en inputs: 1000000 -> "1.000.000"
+function fmtMontoInput(n) {
+  if (!n && n !== 0) return '';
+  const num = parseFloat(String(n).replace(/\./g,'').replace(',','.'));
+  if (isNaN(num)) return '';
+  const parts = Math.abs(num).toString().split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (num < 0 ? '-' : '') + parts.join(',');
+}
+// Parsea string con puntos/comas a número puro
+function parseMonto(s) {
+  if (!s) return '';
+  // Formato argentino: punto=miles, coma=decimal
+  const clean = String(s).replace(/\./g,'').replace(',','.');
+  const n = parseFloat(clean);
+  return isNaN(n) ? '' : n;
+}
+// Formateo en vivo mientras tipea
+function formatMontoLive(val) {
+  if (!val) return '';
+  // Permitir escribir: solo dígitos, puntos y coma
+  let s = val.replace(/[^\d.,]/g, '');
+  // Separar parte decimal si existe
+  const comIdx = s.lastIndexOf(',');
+  let intPart = comIdx >= 0 ? s.slice(0, comIdx) : s;
+  const decPart = comIdx >= 0 ? s.slice(comIdx) : '';
+  // Quitar puntos existentes para reformatear
+  intPart = intPart.replace(/\./g, '');
+  // Agregar puntos cada 3 dígitos
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return intPart + decPart;
+}
+function tasaDefaultPct(tasa) {
+  if (tasa === 'bna') return '6';
+  return '';
+}
 
 // CAUSAS
 function renderMetrics() {
@@ -855,8 +957,9 @@ function renderTable() {
   const tb = document.getElementById('tbody');
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">No se encontraron causas</td></tr>'; return; }
   tb.innerHTML = rows.map(function(c) {
+    const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
     return '<tr class="data-row" onclick="openCausaModal(' + c._i + ')">' +
-      '<td class="col-autos" style="font-weight:600">' + c.autos + '</td>' +
+      '<td class="col-autos" style="font-weight:600;display:flex;align-items:center;gap:2px">' + c.autos + driveIco + '</td>' +
       '<td class="col-expte" style="color:#758B8F;font-size:12px">' + c.expte + '</td>' +
       '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
@@ -881,7 +984,7 @@ function openCausaModal(idx) {
   const c = (editCausaIdx !== null) ? d[editCausaIdx] : {};
   document.getElementById('modal-causa-title').textContent = (editCausaIdx !== null) ? 'Editar causa' : 'Nueva causa';
   document.getElementById('btn-delete-causa').style.display = (editCausaIdx !== null) ? 'block' : 'none';
-  ['autos','expte','juzgado','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','msg','msgMes'].forEach(function(f) {
+  ['autos','expte','juzgado','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','msg','msgMes','drive'].forEach(function(f) {
     const el = document.getElementById('f-' + f); if (el) el.value = c[f] || '';
   });
   document.getElementById('f-fuero').value = c.fuero || currentFuero;
@@ -925,7 +1028,9 @@ function saveCausa() {
     obsFin: document.getElementById('f-obs-fin').value,
     cuotas: cuotasTemp,
     msg: document.getElementById('f-msg').value,
-    msgMes: document.getElementById('f-msg-mes').value
+    msgMes: document.getElementById('f-msg-mes').value,
+    drive: document.getElementById('f-drive') ? document.getElementById('f-drive').value : '',
+    tasaPct: ''
   };
   const arr = state[fuero === 'laboral' ? 'laboral' : 'comercial'];
   if (editCausaIdx !== null && fuero === currentFuero) arr[editCausaIdx] = obj;
@@ -949,9 +1054,11 @@ function deleteCausa() {
 }
 function renderCuotas() {
   document.getElementById('cuotas-list').innerHTML = cuotasTemp.map(function(c, i) {
+    const montoFmt = c.monto ? fmtMontoInput(c.monto) : '';
     return '<div class="cuota-row">' +
-      '<input type="text" value="' + (c.desc || 'Cuota ' + (i+1)) + '" onchange="cuotasTemp[' + i + '].desc=this.value">' +
-      '<input type="number" value="' + (c.monto||'') + '" placeholder="Monto ARS" onchange="cuotasTemp[' + i + '].monto=this.value">' +
+      '<input type="text" value="' + (c.desc || 'Cuota ' + (i+1)) + '" placeholder="Descripción" onchange="cuotasTemp[' + i + '].desc=this.value">' +
+      '<input type="text" inputmode="numeric" value="' + montoFmt + '" placeholder="Monto ARS" onchange="cuotasTemp[' + i + '].monto=parseMonto(this.value)" oninput="this.value=formatMontoLive(this.value)">' +
+      '<input type="date" value="' + (c.vencimiento||'') + '" title="Vencimiento" onchange="cuotasTemp[' + i + '].vencimiento=this.value">' +
       '<select onchange="cuotasTemp[' + i + '].estado=this.value"><option value="pendiente"' + (c.estado==='pendiente'?' selected':'') + '>Pendiente</option><option value="pagada"' + (c.estado==='pagada'?' selected':'') + '>Pagada</option></select>' +
       '<button class="btn-rm" onclick="rmCuota(' + i + ')">×</button>' +
       '</div>';
@@ -1064,11 +1171,12 @@ function renderCobros() {
     if (estadoCobro.includes('totalmente')) estadoColor = '#059669';
     else if (estadoCobro.includes('parcialmente')) estadoColor = '#d97706';
     else if (estadoCobro.includes('Pendiente')) estadoColor = '#e24b4a';
+    const tasaPctVal = c.tasaPct || tasaDefaultPct(c.tasa) || '';
 
     html += '<tr>' +
       '<td style="font-weight:600;font-size:12px">' + (c.autos||'—') + '</td>' +
       '<td style="font-size:12px">' + (c.montoDem ? '$'+Math.round(parseFloat(c.montoDem)).toLocaleString('es-AR') : '—') + '</td>' +
-      '<td><span style="font-size:11px;background:#e8e0d8;padding:2px 7px;border-radius:10px;color:#2F4F56">' + (tasaNombre[c.tasa]||'—') + '</span></td>' +
+      '<td><input type="text" inputmode="decimal" value="' + tasaPctVal + '" placeholder="% mens." onchange="updateCausa(' + i + ',\'' + fuero + '\',\'tasaPct\',this.value)" style="padding:4px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:75px;font-family:Montserrat,sans-serif" title="Tasa mensual %"></td>' +
       '<td style="font-size:12px;font-weight:600;color:#2F4F56">' + hon + '</td>' +
       '<td><span style="font-size:11px;font-weight:600;color:' + estadoColor + '">' + estadoCobro + '</span></td>' +
       '<td><input type="date" value="' + (c.fechaCobro||'') + '" onchange="updateCausa(' + i + ',\'' + fuero + '\',\'fechaCobro\',this.value)" style="padding:4px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px"></td>' +
@@ -1107,14 +1215,18 @@ function renderCuotasCobro() {
     body.innerHTML = '<div class="empty">Sin cuotas. Agregá con el botón de abajo.</div>';
     return;
   }
-  let html = '<div style="display:flex;flex-direction:column;gap:8px">';
+  let html = '<div style="display:grid;grid-template-columns:10px 1fr;gap:0;margin-bottom:6px;padding:0 8px"><span></span><div style="display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1.2fr auto;gap:8px;font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em"><span>Descripción</span><span>Monto ARS</span><span>Vencimiento</span><span>Estado</span><span></span></div></div>';
+  html += '<div style="display:flex;flex-direction:column;gap:6px">';
   cuotasCobroTemp.forEach(function(c, i) {
     const bg = c.estado === 'pagada' ? '#d1fae5' : '#fee2e2';
+    const borderCol = c.estado === 'pagada' ? '#059669' : '#e24b4a';
     const desc = (c.desc || 'Cuota ' + (i+1)).replace(/"/g, '');
-    html += '<div style="display:grid;grid-template-columns:2fr 1.5fr 1.5fr auto;gap:8px;align-items:center;padding:8px;background:#faf7f4;border-radius:8px">' +
-      '<input value="' + desc + '" onchange="cuotasCobroTemp[' + i + '].desc=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input type="number" value="' + (c.monto||'') + '" placeholder="Monto ARS" onchange="cuotasCobroTemp[' + i + '].monto=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">' +
-      '<select onchange="cuotasCobroTemp[' + i + '].estado=this.value;renderCuotasCobro()" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:' + bg + '">' +
+    const montoFmt = c.monto ? fmtMontoInput(c.monto) : '';
+    html += '<div style="display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1.2fr auto;gap:8px;align-items:center;padding:8px 10px;background:#faf7f4;border-radius:8px;border-left:3px solid ' + borderCol + '">' +
+      '<input value="' + desc + '" placeholder="Ej: Cuota 1" onchange="cuotasCobroTemp[' + i + '].desc=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;width:100%">' +
+      '<input type="text" inputmode="numeric" value="' + montoFmt + '" placeholder="Monto" onchange="cuotasCobroTemp[' + i + '].monto=parseMonto(this.value)" oninput="this.value=formatMontoLive(this.value)" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:100%">' +
+      '<input type="date" value="' + (c.vencimiento||'') + '" onchange="cuotasCobroTemp[' + i + '].vencimiento=this.value" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:100%">' +
+      '<select onchange="cuotasCobroTemp[' + i + '].estado=this.value;renderCuotasCobro()" style="padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:' + bg + ';font-weight:600">' +
         '<option value="pendiente"' + (c.estado!=='pagada'?' selected':'') + '>Pendiente</option>' +
         '<option value="pagada"' + (c.estado==='pagada'?' selected':'') + '>Pagada</option>' +
       '</select>' +
@@ -1178,7 +1290,11 @@ function setCalView(v) {
   calView = v;
   document.getElementById('vbtn-list').classList.toggle('active', v==='list');
   document.getElementById('vbtn-cards').classList.toggle('active', v==='cards');
-  renderCal();
+  document.getElementById('vbtn-grid').classList.toggle('active', v==='grid');
+  document.getElementById('event-list').style.display = (v==='grid') ? 'none' : '';
+  document.getElementById('cal-grid-container').style.display = (v==='grid') ? 'block' : 'none';
+  if (v==='grid') renderCalGrid();
+  else renderCal();
 }
 function renderCal() {
   const q = (document.getElementById('cal-search').value||'').toLowerCase();
@@ -1222,6 +1338,7 @@ function renderCal() {
           '<div><div class="ev-causa">' + (e.causa||'—') + '</div>' + (e.obs ? '<div class="ev-obs">' + e.obs + '</div>' : '') + '</div>' +
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
           (e.link ? '<a href="' + e.link + '" target="_blank" style="font-size:12px;color:#2F4F56;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none">📹 Link</a>' : '') +
+          '<a href="' + buildGCalLink(e) + '" target="_blank" style="font-size:11px;color:#4285f4;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap">📅 Agendar</a>' +
           '<button class="ev-btn" onclick="openEvModal(' + e._i + ')">Editar</button>' +
           '</div></div>';
       } else {
@@ -1230,7 +1347,10 @@ function renderCal() {
           '<div class="ev-causa">' + (e.causa||'—') + '</div>' +
           (e.obs ? '<div class="ev-obs">' + e.obs + '</div>' : '') +
           (e.link ? '<div class="ev-link"><a href="' + e.link + '" target="_blank">📹 Abrir videoconferencia</a></div>' : '') +
-          '<div class="ev-actions"><button class="ev-btn" onclick="openEvModal(' + e._i + ')">Editar</button></div>' +
+          '<div class="ev-actions">' +
+          '<button class="ev-btn" onclick="openEvModal(' + e._i + ')">Editar</button>' +
+          '<a href="' + buildGCalLink(e) + '" target="_blank" class="ev-btn" style="text-decoration:none;color:#4285f4;border-color:#c5d9f8">📅 Agendar</a>' +
+          '</div>' +
           '</div>';
       }
     });
@@ -1429,7 +1549,9 @@ function renderNotas() {
   else if (filtroFecha === 'mes') notas = notas.filter(function(n) { return n.deadline && n.deadline.startsWith(mesActual); });
   else if (filtroFecha === 'vencidos') notas = notas.filter(function(n) { return n.deadline && n.deadline < hoy && n.status !== 'completado'; });
 
-  if (!notas.length) { wrap.innerHTML = '<div class="empty">No hay tareas con esos filtros.</div>'; return; }
+  if (!notas.length) { wrap.innerHTML = '<div class="empty">No hay tareas con esos filtros.</div>';
+    if (notasArchivoVisible) renderNotasArchivo();
+    return; }
 
   const sc = { pendiente:'#e24b4a', 'en-curso':'#d97706', 'ver-juan':'#ca8a04', completado:'#059669' };
   const statusLabel = { pendiente:'Pendiente', 'en-curso':'En curso', 'ver-juan':'Ver Juan', completado:'Completado' };
@@ -1470,6 +1592,145 @@ function renderNotas() {
           }).join('') : '<div style="color:#758B8F;font-size:12px;padding:8px">Sin tareas</div>') +
           '</div></div>';
       }).join('') + '</div>';
+  }
+}
+
+// GCAL LINK
+function buildGCalLink(e) {
+  if (!e.fecha) return '';
+  const dateStr = e.fecha.replace(/-/g,'');
+  const title = encodeURIComponent((e.tipo||'Evento') + (e.causa ? ' — ' + e.causa : ''));
+  const details = encodeURIComponent((e.obs||'') + (e.link ? '\nLink: ' + e.link : ''));
+  let dates;
+  if (e.hora) {
+    const [hh, mm] = e.hora.split(':');
+    const hEnd = String((parseInt(hh)+1)%24).padStart(2,'0');
+    dates = dateStr + 'T' + hh + mm + '00/' + dateStr + 'T' + hEnd + mm + '00';
+  } else {
+    const nextDay = new Date(e.fecha + 'T00:00:00');
+    nextDay.setDate(nextDay.getDate()+1);
+    dates = dateStr + '/' + nextDay.toISOString().slice(0,10).replace(/-/g,'');
+  }
+  return 'https://www.google.com/calendar/render?action=TEMPLATE&text=' + title + '&dates=' + dates + '&details=' + details;
+}
+
+// CALENDAR GRID
+function calGridHoy() {
+  calGridYear = new Date().getFullYear();
+  calGridMonth = new Date().getMonth();
+  renderCalGrid();
+}
+function moveCalGrid(dir) {
+  calGridMonth += dir;
+  if (calGridMonth > 11) { calGridMonth = 0; calGridYear++; }
+  if (calGridMonth < 0) { calGridMonth = 11; calGridYear--; }
+  renderCalGrid();
+}
+function renderCalGrid() {
+  const title = document.getElementById('cal-grid-title');
+  if (title) title.textContent = MESES_ES[calGridMonth] + ' ' + calGridYear;
+  const body = document.getElementById('cal-grid-body');
+  if (!body) return;
+  const hoy = new Date().toISOString().slice(0,10);
+  // First day of month (0=Sun...6=Sat), convert to Mon-first (0=Mon...6=Sun)
+  const firstDay = new Date(calGridYear, calGridMonth, 1).getDay();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(calGridYear, calGridMonth+1, 0).getDate();
+  const daysInPrev = new Date(calGridYear, calGridMonth, 0).getDate();
+  // Build event map keyed by date string
+  const evMap = {};
+  state.eventos.forEach(function(e, idx) {
+    if (!e.fecha) return;
+    if (!evMap[e.fecha]) evMap[e.fecha] = [];
+    evMap[e.fecha].push(Object.assign({}, e, {_i: idx}));
+  });
+  const colorMap = {
+    'ev-testimonial':'#3b82f6','ev-seclo':'#8b5cf6','ev-prueba':'#e24b4a',
+    'ev-escrito':'#d97706','ev-demanda':'#059669','ev-comercial':'#db2777',
+    'ev-art80':'#0891b2','ev-recordatorio':'#f59e0b','ev-factura':'#6366f1','ev-otro':'#758B8F'
+  };
+  // Total cells: enough rows
+  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+  let html = '';
+  for (let cell = 0; cell < totalCells; cell++) {
+    const dayNum = cell - startOffset + 1;
+    let dateStr = '', isOther = false, displayNum = '';
+    if (dayNum < 1) {
+      displayNum = daysInPrev + dayNum;
+      const prevMonth = calGridMonth === 0 ? 11 : calGridMonth - 1;
+      const prevYear = calGridMonth === 0 ? calGridYear - 1 : calGridYear;
+      dateStr = prevYear + '-' + String(prevMonth+1).padStart(2,'0') + '-' + String(displayNum).padStart(2,'0');
+      isOther = true;
+    } else if (dayNum > daysInMonth) {
+      displayNum = dayNum - daysInMonth;
+      const nextMonth = calGridMonth === 11 ? 0 : calGridMonth + 1;
+      const nextYear = calGridMonth === 11 ? calGridYear + 1 : calGridYear;
+      dateStr = nextYear + '-' + String(nextMonth+1).padStart(2,'0') + '-' + String(displayNum).padStart(2,'0');
+      isOther = true;
+    } else {
+      displayNum = dayNum;
+      dateStr = calGridYear + '-' + String(calGridMonth+1).padStart(2,'0') + '-' + String(dayNum).padStart(2,'0');
+    }
+    const isToday = dateStr === hoy;
+    const dayEvs = evMap[dateStr] || [];
+    html += '<div class="cal-day' + (isOther?' other-month':'') + (isToday?' today':'') + '">';
+    html += '<div class="cal-day-num">' + displayNum + '</div>';
+    const maxShow = 3;
+    dayEvs.slice(0, maxShow).forEach(function(e) {
+      const cls = evClass(e.tipo);
+      const col = colorMap[cls] || '#758B8F';
+      const bg = col + '22';
+      const label = (e.hora ? e.hora + ' ' : '') + (e.causa || e.tipo || 'Evento');
+      html += '<span class="cal-ev-pill" style="background:' + bg + ';color:' + col + ';border-left:2px solid ' + col + '" onclick="openEvModal(' + e._i + ')" title="' + (e.tipo||'') + ' — ' + (e.causa||'') + '">' + label + '</span>';
+    });
+    if (dayEvs.length > maxShow) {
+      html += '<span class="cal-more" onclick="calGridDrillDown(\'' + dateStr + '\')">+' + (dayEvs.length - maxShow) + ' más</span>';
+    }
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+function calGridDrillDown(dateStr) {
+  // Switch to cards view filtered to that day
+  setCalView('cards');
+  document.getElementById('cal-vista').value = 'todos';
+  document.getElementById('cal-mes').value = dateStr.substring(0,7);
+  renderCal();
+}
+
+// NOTAS ARCHIVO
+function toggleNotasArchivo() {
+  notasArchivoVisible = !notasArchivoVisible;
+  const sec = document.getElementById('notas-archivo-section');
+  const btn = document.getElementById('btn-notas-arch-toggle');
+  if (sec) sec.style.display = notasArchivoVisible ? 'block' : 'none';
+  if (btn) btn.textContent = notasArchivoVisible ? '📁 Ocultar completadas' : '📁 Completadas';
+  if (notasArchivoVisible) renderNotasArchivo();
+}
+function renderNotasArchivo() {
+  const tb = document.getElementById('tb-notas-archivo');
+  if (!tb) return;
+  const all = state.notas[currentUser] || [];
+  const completadas = all.map(function(n,i){return Object.assign({},n,{_i:i});}).filter(function(n){return n.status==='completado';});
+  if (!completadas.length) {
+    tb.innerHTML = '<tr><td colspan="4" class="empty">Sin tareas completadas</td></tr>';
+    return;
+  }
+  tb.innerHTML = completadas.map(function(n) {
+    return '<tr>' +
+      '<td style="padding:10px 14px;font-size:13px;border-bottom:1px dashed #e8e0d8;font-weight:500">' + (n.tarea||'—') + '</td>' +
+      '<td style="padding:10px 14px;font-size:12px;color:#758B8F;border-bottom:1px dashed #e8e0d8">' + (n.causa||'—') + '</td>' +
+      '<td style="padding:10px 14px;font-size:12px;color:#758B8F;border-bottom:1px dashed #e8e0d8">' + (n.deadline||'—') + '</td>' +
+      '<td style="padding:10px 14px;border-bottom:1px dashed #e8e0d8"><button onclick="restaurarNota(' + n._i + ')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">↩ Restaurar</button></td>' +
+      '</tr>';
+  }).join('');
+}
+function restaurarNota(idx) {
+  if (state.notas[currentUser] && state.notas[currentUser][idx]) {
+    state.notas[currentUser][idx].status = 'pendiente';
+    saveNotas();
+    renderNotas();
+    renderNotasArchivo();
   }
 }
 
