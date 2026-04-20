@@ -516,6 +516,9 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
     </div>
   </div>
 
+  </div>
+</div>
+
 <!-- MODAL CAUSA -->
 <div class="modal-bg" id="modal-causa-bg" onclick="if(event.target===this)closeCausaModal()">
 <div class="modal">
@@ -774,53 +777,46 @@ function fixDate(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY HH:MM:SS o DD/MM/YYYY — formato Apps Script
+  const dtMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (dtMatch) {
+    return dtMatch[3] + '-' + String(dtMatch[2]).padStart(2,'0') + '-' + String(dtMatch[1]).padStart(2,'0');
+  }
   if (/^\d+(\.\d+)?$/.test(s)) {
     const n = Math.floor(parseFloat(s));
     const d = new Date(Date.UTC(1899, 11, 30));
     d.setUTCDate(d.getUTCDate() + n);
     return d.toISOString().slice(0, 10);
   }
-  if (s.includes('/')) {
-    const p = s.split('/');
-    if (p.length === 3) {
-      const [a, b, c] = p;
-      if (c.length === 4) return c + '-' + b.padStart(2,'0') + '-' + a.padStart(2,'0');
-    }
-  }
   try { const d = new Date(s); if (!isNaN(d)) return d.toISOString().slice(0,10); } catch(e) {}
   return s;
 }
 
-// FIX: hora correcta desde Google Sheets
-// Sheets puede enviar:
-//   1) String ISO: "1899-12-30T16:16:48.000Z" → la hora real es UTCHours - 4
-//   2) Fracción decimal: 0.5 = mediodía → multiplicar × 1440 minutos
-//   3) String HH:MM ya correcto
 function fixHora(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
   // Ya está en formato HH:MM
   if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5,'0');
-  // Número decimal puro (fracción del día desde Sheets)
-  // Ej: 0.5 = 12:00, 0.458333 = 11:00
+  // DD/MM/YYYY HH:MM:SS — formato que manda Apps Script cuando la celda tiene fecha+hora
+  const dtMatch = s.match(/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/);
+  if (dtMatch) {
+    return String(parseInt(dtMatch[1])).padStart(2,'0') + ':' + dtMatch[2];
+  }
+  // Número decimal puro (fracción del día)
   if (/^0?\.\d+$/.test(s) || /^\d+\.\d+$/.test(s)) {
     const f = parseFloat(s);
-    // Solo tomar la parte fraccionaria (ignora días)
     const frac = f - Math.floor(f);
     const totalMin = Math.round(frac * 1440);
     const h = Math.floor(totalMin / 60) % 24;
     const m = totalMin % 60;
     return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
   }
-  // ISO string tipo "1899-12-30T16:16:48.000Z"
-  // La hora en UTC tiene un offset fijo de +4h respecto a lo guardado
-  // (Sheets serializa en UTC+0 pero el valor ingresado era hora local Argentina UTC-3)
-  // Casos conocidos: T16:16 → 12:00, T15:16 → 11:00, T14:00 → 10:00
+  // ISO string tipo "1899-12-30T15:00:00.000Z" — Apps Script en timezone Argentina (UTC-3)
   if (s.includes('T')) {
     try {
       const d = new Date(s);
       if (!isNaN(d)) {
-        let h = d.getUTCHours() - 4;
+        let h = d.getUTCHours() - 3;
         if (h < 0) h += 24;
         const m = d.getUTCMinutes();
         return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
@@ -959,7 +955,7 @@ function renderTable() {
   tb.innerHTML = rows.map(function(c) {
     const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
     return '<tr class="data-row" onclick="openCausaModal(' + c._i + ')">' +
-      '<td class="col-autos" style="font-weight:600;display:flex;align-items:center;gap:2px">' + c.autos + driveIco + '</td>' +
+      '<td class="col-autos" style="font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap">' + c.autos + driveIco + '</span></td>' +
       '<td class="col-expte" style="color:#758B8F;font-size:12px">' + c.expte + '</td>' +
       '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
@@ -1358,6 +1354,19 @@ function renderCal() {
   });
   list.innerHTML = html;
 }
+function openEvModalWithDate(dateStr) {
+  openEvModal();
+  setTimeout(function() {
+    const ef = document.getElementById('ev-fecha');
+    if (ef) ef.value = dateStr;
+  }, 50);
+}
+function calDayClick(ev, dateStr) {
+  // Only open new event if clicking on the day cell itself, not on a pill
+  if (ev.target.classList.contains('cal-day') || ev.target.classList.contains('cal-day-num')) {
+    openEvModalWithDate(dateStr);
+  }
+}
 function openEvModal(idx) {
   editEvIdx = (idx !== undefined) ? idx : null;
   const e = (editEvIdx !== null) ? state.eventos[editEvIdx] : {};
@@ -1673,7 +1682,7 @@ function renderCalGrid() {
     }
     const isToday = dateStr === hoy;
     const dayEvs = evMap[dateStr] || [];
-    html += '<div class="cal-day' + (isOther?' other-month':'') + (isToday?' today':'') + '">';
+    html += '<div class="cal-day' + (isOther?' other-month':'') + (isToday?' today':'') + '" onclick="calDayClick(event,\'' + dateStr + '\')" title="Click para agregar evento">';
     html += '<div class="cal-day-num">' + displayNum + '</div>';
     const maxShow = 3;
     dayEvs.slice(0, maxShow).forEach(function(e) {
@@ -1681,7 +1690,7 @@ function renderCalGrid() {
       const col = colorMap[cls] || '#758B8F';
       const bg = col + '22';
       const label = (e.hora ? e.hora + ' ' : '') + (e.causa || e.tipo || 'Evento');
-      html += '<span class="cal-ev-pill" style="background:' + bg + ';color:' + col + ';border-left:2px solid ' + col + '" onclick="openEvModal(' + e._i + ')" title="' + (e.tipo||'') + ' — ' + (e.causa||'') + '">' + label + '</span>';
+      html += '<span class="cal-ev-pill" style="background:' + bg + ';color:' + col + ';border-left:2px solid ' + col + '" onclick="event.stopPropagation();openEvModal(' + e._i + ')" title="' + (e.tipo||'') + ' — ' + (e.causa||'') + '">' + label + '</span>';
     });
     if (dayEvs.length > maxShow) {
       html += '<span class="cal-more" onclick="calGridDrillDown(\'' + dateStr + '\')">+' + (dayEvs.length - maxShow) + ' más</span>';
