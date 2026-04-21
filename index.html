@@ -1549,7 +1549,7 @@ function renderCalGrid(){
     const isToday=dateStr===hoy, dayEvs=evMap[dateStr]||[], numStyle=isOther?'color:#c0b8b0':'';
     html+='<div class="cal-day'+(isOther?' other-month':'')+(isToday?' today':'')+'" onclick="calDayClick(event,\''+dateStr+'\')" title="Click para agregar evento">';
     html+='<div class="cal-day-num" style="'+numStyle+'">'+displayNum+'</div>';
-    dayEvs.slice(0,3).forEach(function(e){const cls=evClass(e.tipo),col=colorMap[cls]||'#758B8F',bg=col+'22',label=(e.hora?e.hora+' ':')+(e.causa||e.tipo||'Evento');
+    dayEvs.slice(0,3).forEach(function(e){const cls=evClass(e.tipo),col=colorMap[cls]||'#758B8F',bg=col+'22',label=(e.hora?e.hora+' ':'')+(e.causa||e.tipo||'Evento');
       html+='<span class="cal-ev-pill" style="background:'+bg+';color:'+col+';border-left:2px solid '+col+'" onclick="event.stopPropagation();openEvModal('+e._i+')" title="'+(e.tipo||'')+' — '+(e.causa||'')+'">'+label+'</span>';});
     if(dayEvs.length>3)html+='<span class="cal-more" onclick="calGridDrillDown(\''+dateStr+'\')">+'+(dayEvs.length-3)+' más</span>';
     html+='</div>';
