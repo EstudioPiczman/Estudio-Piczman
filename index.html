@@ -333,7 +333,6 @@ tr.data-row.expanded td{background:#f5f0eb}
     </div>
   </div>
   <div class="event-list" id="event-list"></div>
-  <div id="hora-debug" style="display:none;margin-top:1rem;background:#1e1e1e;color:#6ee7b7;border-radius:8px;padding:1rem;font-size:11px;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
   <div id="cal-grid-container" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
       <div style="display:flex;align-items:center;gap:10px">
@@ -800,14 +799,7 @@ async function loadAll() {
     const [lab, cyc, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAL)]);
     state.laboral = parseSheet(lab, CAUSAS_COLS);
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
-    window._horaDebug = [];
     state.eventos = parseSheet(cal, EV_COLS);
-    // Show debug panel
-    const dbg = document.getElementById('hora-debug');
-    if (dbg && window._horaDebug.length) {
-      dbg.style.display = 'block';
-      dbg.textContent = '=== RAW HORA VALUES FROM SHEETS ===\n' + window._horaDebug.join('\n');
-    }
     loadLocal();
     buildCalMeses();
     buildCausasList();
@@ -879,7 +871,7 @@ function fixHora(val) {
   const s = String(val).trim();
   // Ya en formato HH:MM
   if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5,'0');
-  // DD/MM/YYYY HH:MM:SS — Apps Script cuando la celda es DateTime (Argentina local)
+  // DD/MM/YYYY HH:MM:SS — Apps Script DateTime string (hora local Argentina)
   const dtMatch = s.match(/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/);
   if (dtMatch) return String(parseInt(dtMatch[1])).padStart(2,'0') + ':' + dtMatch[2];
   // Apps Script Date.toString() = "Mon Feb 18 2026 12:00:00 GMT-0300 ..."
@@ -891,14 +883,21 @@ function fixHora(val) {
     const totalMin = Math.round(frac * 1440);
     return String(Math.floor(totalMin/60)%24).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
   }
-  // ISO string — Argentina es UTC-3, Apps Script serializa en UTC
+  // ISO "1899-12-30THH:MM:SS.000Z" — Apps Script serial con offset fijo de +4h y minutos con ruido
+  // Confirmado: T16:32 => 12:00, T15:32 => 11:00, T15:02 => 10:30
+  // Offset exacto = 4h, minutos se redondean al cuarto de hora más cercano
   if (s.includes('T')) {
     try {
       const d = new Date(s);
       if (!isNaN(d)) {
-        let h = d.getUTCHours() - 3;
+        let h = d.getUTCHours() - 4;
         if (h < 0) h += 24;
-        return String(h).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
+        // Redondear minutos al cuarto de hora más cercano (0, 15, 30, 45)
+        const rawMin = d.getUTCMinutes();
+        const m = Math.round(rawMin / 15) * 15 % 60;
+        // Si el redondeo sube a 60, sumar 1 hora
+        if (Math.round(rawMin / 15) * 15 >= 60) h = (h + 1) % 24;
+        return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
       }
     } catch(e) {}
   }
@@ -913,14 +912,7 @@ function parseSheet(rows, cols) {
     cols.forEach(function(c, i) {
       let v = r[i] || '';
       if (c === 'fecha') v = fixDate(v);
-      if (c === 'hora') {
-        const raw = String(r[i] || '');
-        // Log raw hora values to console so we can see what format arrives
-        if (raw && raw !== '') console.log('RAW HORA:', JSON.stringify(raw), '=> fixHora:', fixHora(raw));
-        // Also collect for debug panel
-        if (raw && raw !== '' && window._horaDebug) window._horaDebug.push('RAW: ' + JSON.stringify(raw) + '  =>  ' + fixHora(raw));
-        v = fixHora(v);
-      }
+      if (c === 'hora') v = fixHora(v);
       obj[c] = v;
     });
     if (obj.cuotas && typeof obj.cuotas === 'string') {
