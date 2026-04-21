@@ -204,7 +204,9 @@ tr.data-row.expanded td{background:#f5f0eb}
 .prueba-toggle.on.pt-test{background:#5b21b6;border-color:#5b21b6}
 .prueba-toggle.on.pt-info{background:#0891b2;border-color:#0891b2}
 .prueba-toggle.on.pt-peric-c{background:#059669;border-color:#059669}
-.prueba-toggle.on.pt-peric-i{background:#065f46;border-color:#065f46}
+.prueba-toggle.on.pt-doc-dem{background:#1e3a8a;border-color:#1e3a8a}
+.fs-pendiente{background:#fef2f2 !important;border-color:#fca5a5 !important}
+.fs-pendiente:focus{border-color:#e24b4a !important}
 .prueba-toggle.on.pt-other{background:#d97706;border-color:#d97706}
 </style>
 <body>
@@ -1274,42 +1276,49 @@ function rmCuota(i) { cuotasTemp.splice(i, 1); renderCuotas(); }
 const OFICIO_ESTADOS = ['pendiente','enviado','recibido','respondido','no-aplica'];
 const TESTIGO_ESTADOS = ['pendiente','declaró','incompareció'];
 
+function fsStyle(val, hasContent) {
+  var empty = hasContent && (!val || !val.trim());
+  return 'padding:5px 7px;border:1px solid ' + (empty ? '#fca5a5' : '#d4c9be') + ';border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;background:' + (empty ? '#fef2f2' : '#fff');
+}
+
 function renderOficios() {
-  const el = document.getElementById('oficios-list');
+  var el = document.getElementById('oficios-list');
   if (!el) return;
   if (!oficiosTemp.length) {
-    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin oficios. Usá el botón para agregar.</div>';
+    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin oficios. Us\u00e1 el bot\u00f3n para agregar.</div>';
     return;
   }
-  const stColors = {'pendiente':'#fef3c7','enviado':'#dbeafe','recibido':'#d1fae5','respondido':'#d1fae5','no-aplica':'#f3f4f6'};
+  var stColors = {'pendiente':'#fef3c7','enviado':'#dbeafe','recibido':'#d1fae5','respondido':'#d1fae5','no-aplica':'#f3f4f6'};
   el.innerHTML = oficiosTemp.map(function(o, i) {
-    const bg = stColors[o.estado] || '#faf7f4';
-    return '<div style="display:grid;grid-template-columns:60px 1.8fr 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+    var bg = stColors[o.estado] || '#faf7f4';
+    var has = !!(o.dest && o.dest.trim());
+    return '<div style="display:grid;grid-template-columns:44px 1.8fr 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<span style="font-size:11px;font-weight:700;color:#758B8F;text-align:center">#' + (i+1) + '</span>' +
-      '<input value="' + (o.dest||'').replace(/"/g,'&quot;') + '" placeholder="Destinatario..." onchange="oficiosTemp['+i+'].dest=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (o.fsEnv||'') + '" placeholder="Fs. enviado" onchange="oficiosTemp['+i+'].fsEnv=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (o.fsRec||'') + '" placeholder="Fs. recibido" onchange="oficiosTemp['+i+'].fsRec=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (o.dest||'').replace(/"/g,'&quot;') + '" placeholder="Destinatario..." onchange="oficiosTemp['+i+'].dest=this.value;renderOficios()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (o.fsEnv||'') + '" placeholder="Fs. enviado" onchange="oficiosTemp['+i+'].fsEnv=this.value;renderOficios()" style="' + fsStyle(o.fsEnv, has) + '">' +
+      '<input value="' + (o.fsRec||'') + '" placeholder="Fs. recibido" onchange="oficiosTemp['+i+'].fsRec=this.value;renderOficios()" style="' + fsStyle(o.fsRec, has) + '">' +
       '<select onchange="oficiosTemp['+i+'].estado=this.value;renderOficios()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
         OFICIO_ESTADOS.map(function(s) { return '<option value="'+s+'"'+(o.estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join('') +
       '</select>' +
-      '<button class="btn-rm" onclick="oficiosTemp.splice('+i+',1);renderOficios()">×</button>' +
+      '<button class="btn-rm" onclick="oficiosTemp.splice('+i+',1);renderOficios()">\u00d7</button>' +
       '</div>';
   }).join('');
 }
 
 function renderTestigos() {
-  const el = document.getElementById('testigos-list');
+  var el = document.getElementById('testigos-list');
   if (!el) return;
   if (!testigosTemp.length) {
-    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Usá el botón para agregar.</div>';
+    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Us\u00e1 el bot\u00f3n para agregar.</div>';
     return;
   }
   el.innerHTML = testigosTemp.map(function(t, i) {
+    var has = !!(t.nombre && t.nombre.trim());
     return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
-      '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Fojas designación" onchange="testigosTemp['+i+'].fojas=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Ej: declaró 12/03, no designada..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">×</button>' +
+      '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Fs. designaci\u00f3n" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="' + fsStyle(t.fojas, has) + '">' +
+      '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Ej: declar\u00f3 Fs. 17, incompareci\u00f3..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">\u00d7</button>' +
       '</div>';
   }).join('');
 }
@@ -1324,18 +1333,19 @@ function addTestigo() {
 }
 
 function renderPericial() {
-  const el = document.getElementById('pericial-list');
+  var el = document.getElementById('pericial-list');
   if (!el) return;
   if (!pericialTemp.length) {
     el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin pericias.</div>';
     return;
   }
   el.innerHTML = pericialTemp.map(function(p, i) {
+    var has = !!(p.tipo && p.tipo.trim());
     return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
-      '<input value="' + (p.tipo||'').replace(/"/g,'&quot;') + '" placeholder="Tipo de pericia..." onchange="pericialTemp['+i+'].tipo=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (p.fsDesig||'').replace(/"/g,'&quot;') + '" placeholder="Fs. designado" onchange="pericialTemp['+i+'].fsDesig=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (p.fsPresent||'').replace(/"/g,'&quot;') + '" placeholder="Fs. presentada" onchange="pericialTemp['+i+'].fsPresent=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<button class="btn-rm" onclick="pericialTemp.splice('+i+',1);renderPericial()">×</button>' +
+      '<input value="' + (p.tipo||'').replace(/"/g,'&quot;') + '" placeholder="Tipo de pericia..." onchange="pericialTemp['+i+'].tipo=this.value;renderPericial()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (p.fsDesig||'').replace(/"/g,'&quot;') + '" placeholder="Fs. designado" onchange="pericialTemp['+i+'].fsDesig=this.value;renderPericial()" style="' + fsStyle(p.fsDesig, has) + '">' +
+      '<input value="' + (p.fsPresent||'').replace(/"/g,'&quot;') + '" placeholder="Fs. presentada" onchange="pericialTemp['+i+'].fsPresent=this.value;renderPericial()" style="' + fsStyle(p.fsPresent, has) + '">' +
+      '<button class="btn-rm" onclick="pericialTemp.splice('+i+',1);renderPericial()">\u00d7</button>' +
       '</div>';
   }).join('');
 }
@@ -1346,12 +1356,13 @@ function addPericial() {
 
 // PRUEBA TOGGLES
 const PRUEBA_OPTS = [
-  {id:'doc',    label:'Documental',           cls:'pt-doc'},
-  {id:'test',   label:'Testimonial',           cls:'pt-test'},
-  {id:'info',   label:'Informativa',           cls:'pt-info'},
-  {id:'peric-c',label:'Pericial Contable',     cls:'pt-peric-c'},
-  {id:'peric-i',label:'Pericial Informática',  cls:'pt-peric-i'},
-  {id:'other',  label:'Otra',                  cls:'pt-other'},
+  {id:'doc',     label:'Documental',                    cls:'pt-doc'},
+  {id:'doc-dem', label:'Documental — poder demandada',  cls:'pt-doc-dem'},
+  {id:'test',    label:'Testimonial',                   cls:'pt-test'},
+  {id:'info',    label:'Informativa',                   cls:'pt-info'},
+  {id:'peric-c', label:'Pericial Contable',             cls:'pt-peric-c'},
+  {id:'peric-i', label:'Pericial Informática',          cls:'pt-peric-i'},
+  {id:'other',   label:'Otra',                          cls:'pt-other'},
 ];
 function renderPruebaToggles(selectedStr) {
   const wrap = document.getElementById('prueba-toggles');
