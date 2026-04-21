@@ -744,7 +744,7 @@ const ETAPA_CLASS = {
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
 const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
-const EV_COLS = ['tipo','fecha','hora','causa','link','obs'];
+const EV_COLS = ['tipo','fechahora','causa','link','obs'];
 
 let state = { laboral:[], comercial:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
 let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'negociacion', calView = 'cards';
@@ -870,8 +870,18 @@ function fixHora(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
   let result = '';
+
+  // "11:16:00 a.m." o "10:46:00 p.m." — formato Time de Google Sheets
+  const ampm = s.match(/^(\d{1,2}):(\d{2}):\d{2}\s*(a\.m\.|p\.m\.|am|pm)$/i);
+  if (ampm) {
+    let h = parseInt(ampm[1]);
+    const pm = /p/i.test(ampm[3]);
+    if (pm && h !== 12) h += 12;
+    if (!pm && h === 12) h = 0;
+    result = String(h).padStart(2,'0') + ':' + ampm[2];
+  }
   // Ya en formato HH:MM
-  if (/^\d{1,2}:\d{2}$/.test(s)) {
+  else if (/^\d{1,2}:\d{2}$/.test(s)) {
     result = s.padStart(5,'0');
   }
   // DD/MM/YYYY HH:MM:SS — Apps Script DateTime string
@@ -890,7 +900,7 @@ function fixHora(val) {
     const totalMin = Math.round(frac * 1440);
     result = String(Math.floor(totalMin/60)%24).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
   }
-  // ISO string — restar 4h (offset confirmado por debug)
+  // ISO "1899-12-30THH:MM:SS.000Z" — offset +4h confirmado por debug
   else if (s.includes('T')) {
     try {
       const d = new Date(s);
@@ -901,12 +911,33 @@ function fixHora(val) {
       }
     } catch(e) {}
   }
+
   if (!result) return s;
   // Limpieza final: ruido sistemático de Sheets serial
-  // ISO serial: :02/:32 → :00/:30   |   entrada directa: :16/:46 → :00/:30
   result = result.replace(/:02$/, ':00').replace(/:32$/, ':30');
   result = result.replace(/:16$/, ':00').replace(/:46$/, ':30');
   return result;
+}
+
+function parseFechaHoraStr(s) {
+  const MESES = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+  // Match: "miércoles, 18 de febrero de 2026, 12:0" or "12:00"
+  const mES = s.match(/,?\s*(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4}),\s*(\d{1,2}):(\d{1,2})/i);
+  if (mES) {
+    const mon = MESES[mES[2].toLowerCase()];
+    if (mon) return {
+      fecha: mES[3] + '-' + String(mon).padStart(2,'0') + '-' + mES[1].padStart(2,'0'),
+      hora: mES[4].padStart(2,'0') + ':' + mES[5].padStart(2,'0')
+    };
+  }
+  const mISO = s.match(/(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{1,2})/);
+  if (mISO) return { fecha: mISO[1], hora: mISO[2].padStart(5,'0') };
+  const mSL = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2})/);
+  if (mSL) return {
+    fecha: mSL[3] + '-' + mSL[2].padStart(2,'0') + '-' + mSL[1].padStart(2,'0'),
+    hora: mSL[4].padStart(2,'0') + ':' + mSL[5].padStart(2,'0')
+  };
+  return { fecha: fixDate(s), hora: '' };
 }
 
 function parseSheet(rows, cols) {
@@ -918,6 +949,12 @@ function parseSheet(rows, cols) {
       let v = r[i] || '';
       if (c === 'fecha') v = fixDate(v);
       if (c === 'hora') v = fixHora(v);
+      if (c === 'fechahora') {
+        const parsed = parseFechaHoraStr(String(v).trim());
+        obj.fecha = parsed.fecha;
+        obj.hora = parsed.hora;
+        return;
+      }
       obj[c] = v;
     });
     if (obj.cuotas && typeof obj.cuotas === 'string') {
@@ -933,6 +970,11 @@ async function saveSheet(sheet, data, cols) {
   const rows = [cols, ...data.map(r => cols.map(c => {
     const v = r[c];
     if (c === 'cuotas') return JSON.stringify(Array.isArray(v) ? v : []);
+    if (c === 'fechahora') {
+      if (v && String(v).trim()) return String(v).trim();
+      const f = r.fecha || '', h = r.hora || '';
+      return f && h ? f + ' ' + h : f || h || '';
+    }
     return v || '';
   }))];
   try {
@@ -1593,12 +1635,14 @@ function renderCal() {
       '</div>';
     html += '<div class="' + (calView==='cards' ? 'day-cards' : 'day-list') + '">';
     dayEvs.forEach(function(e) {
+      const obsText = (e.obs && !e.obs.startsWith('http')) ? e.obs : '';
+      const linkUrl = e.link && e.link.startsWith('http') ? e.link : (e.obs && e.obs.startsWith('http') ? e.obs : '');
       if (calView === 'list') {
         html += '<div class="event-card list-view ' + evClass(e.tipo) + '">' +
           '<div><div class="ev-hora-big">' + (e.hora||'—') + '</div><div style="font-size:10px;color:#758B8F;text-transform:uppercase;font-weight:700;margin-top:2px">' + (e.tipo||'') + '</div></div>' +
-          '<div><div class="ev-causa">' + (e.causa||'—') + '</div>' + (e.obs ? '<div class="ev-obs">' + e.obs + '</div>' : '') + '</div>' +
+          '<div><div class="ev-causa">' + (e.causa||'—') + '</div>' + (obsText ? '<div class="ev-obs">' + obsText + '</div>' : '') + '</div>' +
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
-          (e.link ? '<a href="' + e.link + '" target="_blank" style="font-size:12px;color:#2F4F56;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none">📹 Link</a>' : '') +
+          (linkUrl ? '<a href="' + linkUrl + '" target="_blank" style="font-size:12px;color:#2F4F56;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none">📹 Link</a>' : '') +
           '<a href="' + buildGCalLink(e) + '" target="_blank" style="font-size:11px;color:#4285f4;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap">📅 Agendar</a>' +
           '<button class="ev-btn" onclick="openEvModal(' + e._i + ')">Editar</button>' +
           '</div></div>';
@@ -1606,8 +1650,8 @@ function renderCal() {
         html += '<div class="event-card ' + evClass(e.tipo) + '">' +
           '<div class="ev-header"><span class="ev-tipo">' + (e.tipo||'Evento') + '</span><span class="ev-hora">' + (e.hora||'—') + '</span></div>' +
           '<div class="ev-causa">' + (e.causa||'—') + '</div>' +
-          (e.obs ? '<div class="ev-obs">' + e.obs + '</div>' : '') +
-          (e.link ? '<div class="ev-link"><a href="' + e.link + '" target="_blank">📹 Abrir videoconferencia</a></div>' : '') +
+          (obsText ? '<div class="ev-obs">' + obsText + '</div>' : '') +
+          (linkUrl ? '<div class="ev-link"><a href="' + linkUrl + '" target="_blank">📹 Abrir videoconferencia</a></div>' : '') +
           '<div class="ev-actions">' +
           '<button class="ev-btn" onclick="openEvModal(' + e._i + ')">Editar</button>' +
           '<a href="' + buildGCalLink(e) + '" target="_blank" class="ev-btn" style="text-decoration:none;color:#4285f4;border-color:#c5d9f8">📅 Agendar</a>' +
@@ -1649,10 +1693,13 @@ function openEvModal(idx) {
 }
 function closeEvModal() { document.getElementById('modal-ev-bg').classList.remove('open'); }
 function saveEv() {
+  const fecha = document.getElementById('ev-fecha').value;
+  const hora = document.getElementById('ev-hora').value;
   const obj = {
     tipo: document.getElementById('ev-tipo').value,
-    fecha: document.getElementById('ev-fecha').value,
-    hora: document.getElementById('ev-hora').value,
+    fechahora: fecha && hora ? fecha + ' ' + hora : fecha || hora || '',
+    fecha: fecha,
+    hora: hora,
     causa: document.getElementById('ev-causa').value,
     link: document.getElementById('ev-link').value,
     obs: document.getElementById('ev-obs').value
