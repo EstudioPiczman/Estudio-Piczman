@@ -617,10 +617,11 @@ tr.data-row.expanded td{background:#f5f0eb}
           <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Testimonial — Testigos</label>
           <button onclick="addTestigo()" class="btn-add-cuota" style="margin-top:0">+ Agregar testigo</button>
         </div>
-        <div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Nombre</span>
-          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. designación</span>
-          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Observaciones / declaró</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fecha audiencia</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Observaciones</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Estado</span>
           <span></span>
         </div>
         <div id="testigos-list" style="display:flex;flex-direction:column;gap:5px"></div>
@@ -1313,12 +1314,20 @@ function renderTestigos() {
     el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Us\u00e1 el bot\u00f3n para agregar.</div>';
     return;
   }
+  var stColors = {'pendiente':'#fef3c7','declar\u00f3':'#d1fae5','incompareci\u00f3':'#fee2e2'};
   el.innerHTML = testigosTemp.map(function(t, i) {
     var has = !!(t.nombre && t.nombre.trim());
-    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1.2fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+    var estado = t.estado || 'pendiente';
+    var bg = stColors[estado] || '#faf7f4';
+    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Fs. designaci\u00f3n" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="' + fsStyle(t.fojas, has) + '">' +
-      '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Ej: declar\u00f3 Fs. 17, incompareci\u00f3..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Ej: 31/08/2026" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="' + fsStyle(t.fojas, has) + '">' +
+      '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Observaciones..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
+      '<select onchange="testigosTemp['+i+'].estado=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
+        ['pendiente','declar\u00f3','incompareci\u00f3'].map(function(s) {
+          return '<option value="'+s+'"'+(estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+        }).join('') +
+      '</select>' +
       '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">\u00d7</button>' +
       '</div>';
   }).join('');
@@ -1329,7 +1338,7 @@ function addOficio() {
   renderOficios();
 }
 function addTestigo() {
-  testigosTemp.push({nombre:'', fojas:'', obs:''});
+  testigosTemp.push({nombre:'', fojas:'', obs:'', estado:'pendiente'});
   renderTestigos();
 }
 
