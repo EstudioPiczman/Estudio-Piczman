@@ -549,6 +549,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   <div class="modal-tabs">
     <button class="modal-tab active" onclick="showMTab('datos',this)">Datos generales</button>
     <button class="modal-tab" onclick="showMTab('prueba',this)">Prueba</button>
+    <button class="modal-tab" onclick="showMTab('calendario',this)">Calendario</button>
     <button class="modal-tab" onclick="showMTab('montos',this)">Montos y cuotas</button>
     <button class="modal-tab" onclick="showMTab('mensajes',this)">Mensajes</button>
   </div>
@@ -642,9 +643,16 @@ tr.data-row.expanded td{background:#f5f0eb}
         <div id="pericial-list" style="display:flex;flex-direction:column;gap:5px"></div>
       </div>
 
-      <!-- PENDIENTES -->
-      <div class="form-group full"><label>Pendientes de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
+      <!-- OBSERVACIONES -->
+      <div class="form-group full"><label>Observaciones de prueba</label><textarea id="f-pend-prueba" style="min-height:52px"></textarea></div>
     </div>
+  </div>
+  <div class="modal-panel" id="mpanel-calendario">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:13px;color:#758B8F">Eventos del calendario vinculados a esta causa</div>
+      <button onclick="openEvModalForCausa()" style="padding:6px 14px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Montserrat',sans-serif">+ Nuevo evento</button>
+    </div>
+    <div id="modal-causa-eventos"></div>
   </div>
   <div class="modal-panel" id="mpanel-montos">
     <div class="form-grid">
@@ -1287,8 +1295,7 @@ function renderOficios() {
   var el = document.getElementById('oficios-list');
   if (!el) return;
   if (!oficiosTemp.length) {
-    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin oficios. Us\u00e1 el bot\u00f3n para agregar.</div>';
-    return;
+    el.innerHTML = ''; return;
   }
   var stColors = {'pendiente':'#fef3c7','enviado':'#dbeafe','recibido':'#d1fae5','respondido':'#d1fae5','no-aplica':'#f3f4f6'};
   el.innerHTML = oficiosTemp.map(function(o, i) {
@@ -1310,24 +1317,24 @@ function renderOficios() {
 function renderTestigos() {
   var el = document.getElementById('testigos-list');
   if (!el) return;
-  if (!testigosTemp.length) {
-    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin testigos. Us\u00e1 el bot\u00f3n para agregar.</div>';
-    return;
-  }
+  if (!testigosTemp.length) { el.innerHTML = ''; return; }
   var stColors = {'pendiente':'#fef3c7','declar\u00f3':'#d1fae5','incompareci\u00f3':'#fee2e2'};
+  var causaActual = document.getElementById('f-autos') ? document.getElementById('f-autos').value : '';
   el.innerHTML = testigosTemp.map(function(t, i) {
     var has = !!(t.nombre && t.nombre.trim());
     var estado = t.estado || 'pendiente';
     var bg = stColors[estado] || '#faf7f4';
-    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
+    var calBtn = t.fojas ? '<button onclick="addTestigoToCal('+i+')" title="Agregar al calendario" style="padding:4px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4;white-space:nowrap">📅</button>' : '';
+    return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr auto auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<input value="' + (t.nombre||'').replace(/"/g,'&quot;') + '" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="' + (t.fojas||'').replace(/"/g,'&quot;') + '" placeholder="Ej: 31/08/2026" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="' + fsStyle(t.fojas, has) + '">' +
+      '<input type="date" value="' + (t.fojas||'') + '" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="' + fsStyle(t.fojas, has) + '">' +
       '<input value="' + (t.obs||'').replace(/"/g,'&quot;') + '" placeholder="Observaciones..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
       '<select onchange="testigosTemp['+i+'].estado=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
         ['pendiente','declar\u00f3','incompareci\u00f3'].map(function(s) {
           return '<option value="'+s+'"'+(estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
         }).join('') +
       '</select>' +
+      calBtn +
       '<button class="btn-rm" onclick="testigosTemp.splice('+i+',1);renderTestigos()">\u00d7</button>' +
       '</div>';
   }).join('');
@@ -1346,8 +1353,7 @@ function renderPericial() {
   var el = document.getElementById('pericial-list');
   if (!el) return;
   if (!pericialTemp.length) {
-    el.innerHTML = '<div style="color:#758B8F;font-size:12px;padding:6px 2px">Sin pericias.</div>';
-    return;
+    el.innerHTML = ''; return;
   }
   el.innerHTML = pericialTemp.map(function(p, i) {
     var has = !!(p.tipo && p.tipo.trim());
@@ -1391,7 +1397,65 @@ function togglePrueba(id) {
   renderPruebaToggles(inp.value);
 }
 
-// CALCULADORA
+// MODAL CAUSA — CALENDARIO TAB
+function renderModalCalendario() {
+  var causa = document.getElementById('f-autos') ? document.getElementById('f-autos').value.trim() : '';
+  var el = document.getElementById('modal-causa-eventos');
+  if (!el) return;
+  if (!causa) { el.innerHTML = '<div style="color:#758B8F;font-size:13px;padding:1rem 0">Guardá la causa primero para ver sus eventos.</div>'; return; }
+  var evs = state.eventos.map(function(e,i){return Object.assign({},e,{_i:i});}).filter(function(e){
+    return (e.causa||'').toLowerCase().includes(causa.toLowerCase());
+  }).sort(function(a,b){return (a.fecha+a.hora).localeCompare(b.fecha+b.hora);});
+  var colorMap = {'ev-testimonial':'#3b82f6','ev-seclo':'#8b5cf6','ev-prueba':'#e24b4a','ev-escrito':'#d97706','ev-demanda':'#059669','ev-comercial':'#db2777','ev-art80':'#0891b2','ev-recordatorio':'#f59e0b','ev-factura':'#6366f1','ev-otro':'#758B8F'};
+  if (!evs.length) {
+    el.innerHTML = '<div style="color:#758B8F;font-size:13px;padding:1rem 0">No hay eventos en el calendario para esta causa. Usá el botón para agregar.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' +
+    evs.map(function(e) {
+      var cls = evClass(e.tipo||'');
+      var col = colorMap[cls]||'#758B8F';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#faf7f4;border-radius:8px;border-left:3px solid '+col+'">' +
+        '<div style="min-width:80px"><div style="font-size:12px;font-weight:600;color:#2F4F56">' + (e.fecha||'—') + '</div><div style="font-size:11px;color:#758B8F">' + (e.hora||'') + '</div></div>' +
+        '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#2F4F56">' + (e.tipo||'Evento') + '</div>' + (e.obs ? '<div style="font-size:11px;color:#758B8F">' + e.obs + '</div>' : '') + '</div>' +
+        '<div style="display:flex;gap:6px">' +
+        (e.link ? '<a href="'+e.link+'" target="_blank" style="padding:3px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;color:#2F4F56;text-decoration:none">📹 Link</a>' : '') +
+        '<button onclick="openEvModal('+e._i+')" style="padding:3px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">Editar</button>' +
+        '<button onclick="deleteEvFromModal('+e._i+')" style="padding:3px 8px;border:1px solid #fca5a5;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#e24b4a;font-family:\'Montserrat\',sans-serif">Borrar</button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+}
+function deleteEvFromModal(idx) {
+  if (!confirm('¿Borrar este evento del calendario?')) return;
+  state.eventos.splice(idx, 1);
+  saveSheet(SHEET_CAL, state.eventos, EV_COLS);
+  buildCalMeses(); renderCal();
+  renderModalCalendario();
+}
+function openEvModalForCausa() {
+  var causa = document.getElementById('f-autos') ? document.getElementById('f-autos').value.trim() : '';
+  openEvModal();
+  setTimeout(function() {
+    if (causa) { var ec = document.getElementById('ev-causa'); if (ec) ec.value = causa; }
+  }, 50);
+}
+function addTestigoToCal(i) {
+  var t = testigosTemp[i];
+  var causa = document.getElementById('f-autos') ? document.getElementById('f-autos').value.trim() : '';
+  openEvModal();
+  setTimeout(function() {
+    var ef = document.getElementById('ev-fecha'); if (ef && t.fojas) ef.value = t.fojas;
+    var et = document.getElementById('ev-tipo');  if (et) et.value = 'AUDIENCIA TESTIMONIAL';
+    var ec = document.getElementById('ev-causa'); if (ec && causa) ec.value = causa + (t.nombre ? ' — ' + t.nombre : '');
+  }, 50);
+}
+
+// Override showMTab to render calendario panel when opened
+var _origShowMTab = showMTab;
+function showMTab(id, el) {
+  _origShowMTab(id, el);
+  if (id === 'calendario') renderModalCalendario();
+}
 function calcInteresSimple(capital, desde, hasta, tasa, ipcPct) {
   if (!capital || !desde || !hasta || !tasa) return null;
   const d1 = new Date(desde), d2 = new Date(hasta);
