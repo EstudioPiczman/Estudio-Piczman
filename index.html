@@ -869,39 +869,44 @@ function fixDate(val) {
 function fixHora(val) {
   if (!val && val !== 0) return '';
   const s = String(val).trim();
+  let result = '';
   // Ya en formato HH:MM
-  if (/^\d{1,2}:\d{2}$/.test(s)) return s.padStart(5,'0');
-  // DD/MM/YYYY HH:MM:SS — Apps Script DateTime string (hora local Argentina)
-  const dtMatch = s.match(/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/);
-  if (dtMatch) return String(parseInt(dtMatch[1])).padStart(2,'0') + ':' + dtMatch[2];
+  if (/^\d{1,2}:\d{2}$/.test(s)) {
+    result = s.padStart(5,'0');
+  }
+  // DD/MM/YYYY HH:MM:SS — Apps Script DateTime string
+  else if (/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/.test(s)) {
+    const m = s.match(/^\d{1,2}\/\d{1,2}\/\d{4}\s+(\d{1,2}):(\d{2})/);
+    result = String(parseInt(m[1])).padStart(2,'0') + ':' + m[2];
+  }
   // Apps Script Date.toString() = "Mon Feb 18 2026 12:00:00 GMT-0300 ..."
-  const tsMatch = s.match(/\d{4}\s+(\d{2}):(\d{2}):\d{2}\s+GMT/);
-  if (tsMatch) return tsMatch[1] + ':' + tsMatch[2];
+  else if (/\d{4}\s+(\d{2}):(\d{2}):\d{2}\s+GMT/.test(s)) {
+    const m = s.match(/\d{4}\s+(\d{2}):(\d{2}):\d{2}\s+GMT/);
+    result = m[1] + ':' + m[2];
+  }
   // Número decimal puro (fracción del día)
-  if (/^0?\.\d+$/.test(s) || (/^\d+\.\d+$/.test(s) && parseFloat(s) < 2)) {
+  else if (/^0?\.\d+$/.test(s) || (/^\d+\.\d+$/.test(s) && parseFloat(s) < 2)) {
     const f = parseFloat(s), frac = f - Math.floor(f);
     const totalMin = Math.round(frac * 1440);
-    return String(Math.floor(totalMin/60)%24).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
+    result = String(Math.floor(totalMin/60)%24).padStart(2,'0') + ':' + String(totalMin%60).padStart(2,'0');
   }
-  // ISO "1899-12-30THH:MM:SS.000Z" — Apps Script serial con offset fijo de +4h y minutos con ruido
-  // Confirmado: T16:32 => 12:00, T15:32 => 11:00, T15:02 => 10:30
-  // Offset exacto = 4h, minutos se redondean al cuarto de hora más cercano
-  if (s.includes('T')) {
+  // ISO string — restar 4h (offset confirmado por debug)
+  else if (s.includes('T')) {
     try {
       const d = new Date(s);
       if (!isNaN(d)) {
         let h = d.getUTCHours() - 4;
         if (h < 0) h += 24;
-        // Redondear minutos al cuarto de hora más cercano (0, 15, 30, 45)
-        const rawMin = d.getUTCMinutes();
-        const m = Math.round(rawMin / 15) * 15 % 60;
-        // Si el redondeo sube a 60, sumar 1 hora
-        if (Math.round(rawMin / 15) * 15 >= 60) h = (h + 1) % 24;
-        return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+        result = String(h).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0');
       }
     } catch(e) {}
   }
-  return s;
+  if (!result) return s;
+  // Limpieza final: ruido sistemático de Sheets serial
+  // ISO serial: :02/:32 → :00/:30   |   entrada directa: :16/:46 → :00/:30
+  result = result.replace(/:02$/, ':00').replace(/:32$/, ':30');
+  result = result.replace(/:16$/, ':00').replace(/:46$/, ':30');
+  return result;
 }
 
 function parseSheet(rows, cols) {
