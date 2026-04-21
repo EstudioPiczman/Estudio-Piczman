@@ -1160,26 +1160,27 @@ function openCausaModal(idx) {
   document.getElementById('f-monto-cobrado').value = c.montoCobrado || '';
   document.getElementById('f-obs-fin').value = c.obsFin || '';
   cuotasTemp = Array.isArray(c.cuotas) ? JSON.parse(JSON.stringify(c.cuotas)) : [];
-  // Load oficios - parse from c.info field (JSON) or set defaults for new causa
+  // Load oficios - parse from c.info field (JSON)
   try { oficiosTemp = c.info ? JSON.parse(c.info) : []; if (!Array.isArray(oficiosTemp)) throw 0; }
   catch(e) { oficiosTemp = []; }
-  if (editCausaIdx === null || oficiosTemp.length === 0) {
+  // Only set defaults for brand new causa
+  if (editCausaIdx === null) {
     oficiosTemp = [
       {dest:'Correo Argentino', fsEnv:'', fsRec:'', estado:'pendiente'},
       {dest:'ARCA / AFIP',      fsEnv:'', fsRec:'', estado:'pendiente'}
     ];
   }
-  // Load testigos - parse from c.test field (JSON) or legacy
+  // Load testigos
   try { testigosTemp = c.test ? JSON.parse(c.test) : []; if (!Array.isArray(testigosTemp)) throw 0; }
   catch(e) { testigosTemp = []; }
   renderPruebaToggles(c.pruebas || '');
-  // Load pericial - parse from c.peri field (JSON)
+  // Load pericial
   try { pericialTemp = c.peri ? JSON.parse(c.peri) : []; if (!Array.isArray(pericialTemp)) throw 0; }
   catch(e) { pericialTemp = []; }
-  if (editCausaIdx === null || pericialTemp.length === 0) {
+  // Only set default for brand new causa — just Contable
+  if (editCausaIdx === null) {
     pericialTemp = [
-      {tipo:'Pericial Contable',    fsDesig:'', fsPresent:''},
-      {tipo:'Pericial Informática', fsDesig:'', fsPresent:''}
+      {tipo:'Pericial Contable', fsDesig:'', fsPresent:''}
     ];
   }
   renderOficios();
