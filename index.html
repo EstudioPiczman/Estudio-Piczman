@@ -748,7 +748,9 @@ tr.data-row.expanded td{background:#f5f0eb}
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsdbRI2NNiYlw1LIRAJqB2jBxK4XmqNuNK24OpHeqRbTENXr0gaRTw5CqUA_N8PY4Xw/exec';
-const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario', SHEET_CAUTELARES = 'Status_Cautelares', SHEET_HISTORIAL = 'Historial';
+const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario', SHEET_CAUTELARES = 'Status_Cautelares', SHEET_HISTORIAL = 'Historial', SHEET_PENDIENTES = 'Pendientes', SHEET_ARCHIVO = 'Archivo';
+const PEND_COLS = ['seccion','data'];
+const ARCH_COLS = ['seccion','data','req','dem','user','fecha','estado'];
 const USERS = { mati: 'trasmonte2024', juan: 'piczman2024', bruno: 'estudio2024', sebi: 'lanave2' };
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const ETAPA_CLASS = {
@@ -805,28 +807,108 @@ async function loadAll() {
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
     state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
+    // Pendientes y Archivo viven en Sheets para que sean universales entre users.
+    // Si las pestañas aún no existen en el Sheet, cae al cache local (migración suave).
+    try {
+      const pend = await fetchSheet(SHEET_PENDIENTES);
+      state.pendientes = parsePendientesSheet(pend);
+    } catch(e) { loadPendientesLocal(); }
+    try {
+      const arch = await fetchSheet(SHEET_ARCHIVO);
+      state.archivo = parseArchivoSheet(arch);
+    } catch(e) { loadArchivoLocal(); }
     loadLocal(); buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderNotas(); renderArchivo();
     setSync('saved', 'Sincronizado');
     setTimeout(function() { setSync('', 'Listo'); }, 2000);
   } catch(e) {
     setSync('error', 'Error al cargar');
-    loadLocal(); renderMetrics(); renderTable(); renderCal(); renderTotales(); renderPendientes(); renderNotas();
+    loadLocal(); loadPendientesLocal(); loadArchivoLocal();
+    renderMetrics(); renderTable(); renderCal(); renderTotales(); renderPendientes(); renderNotas();
   }
 }
+// Solo las notas son por usuario (localStorage). Pendientes/Archivo son compartidos (Sheets).
 function loadLocal() {
   try {
-    const p = localStorage.getItem('tm_pendientes'); if (p) state.pendientes = JSON.parse(p);
-    const a = localStorage.getItem('tm_archivo'); if (a) state.archivo = JSON.parse(a);
     const n = localStorage.getItem('tm_notas_' + currentUser);
     state.notas[currentUser] = n ? JSON.parse(n) : [];
   } catch(e) {}
 }
+function loadPendientesLocal() {
+  try { const p = localStorage.getItem('tm_pendientes'); if (p) state.pendientes = JSON.parse(p); } catch(e) {}
+}
+function loadArchivoLocal() {
+  try { const a = localStorage.getItem('tm_archivo'); if (a) state.archivo = JSON.parse(a); } catch(e) {}
+}
+// saveLocal -> ahora persiste pendientes/archivo a Sheets (y deja un cache local por si el fetch falla luego).
 function saveLocal() {
   try {
     localStorage.setItem('tm_pendientes', JSON.stringify(state.pendientes));
     localStorage.setItem('tm_archivo', JSON.stringify(state.archivo));
   } catch(e) {}
+  savePendientesSheet();
+  saveArchivoSheet();
+}
+function parsePendientesSheet(rows) {
+  const pend = { negociacion:[], demanda:[], prueba:[], sortear:[], escritos:[] };
+  if (!rows || !rows.length) return pend;
+  const data = rows[0][0] === 'seccion' ? rows.slice(1) : rows;
+  data.forEach(function(r) {
+    if (!r || !r[0]) return;
+    const sec = String(r[0]);
+    let obj = {};
+    try { obj = JSON.parse(r[1] || '{}'); } catch(e) { obj = {}; }
+    if (!pend[sec]) pend[sec] = [];
+    pend[sec].push(obj);
+  });
+  return pend;
+}
+function parseArchivoSheet(rows) {
+  const arr = [];
+  if (!rows || !rows.length) return arr;
+  const data = rows[0][0] === 'seccion' ? rows.slice(1) : rows;
+  data.forEach(function(r) {
+    if (!r || !r[0]) return;
+    let dataObj = {};
+    try { dataObj = JSON.parse(r[1] || '{}'); } catch(e) { dataObj = {}; }
+    arr.push({
+      seccion: r[0] || '', data: dataObj,
+      req: r[2] || '', dem: r[3] || '',
+      user: r[4] || '', fecha: r[5] || '', estado: r[6] || ''
+    });
+  });
+  return arr;
+}
+async function savePendientesSheet() {
+  setSync('saving', 'Guardando...');
+  const rows = [PEND_COLS.slice()];
+  ['negociacion','demanda','prueba','sortear','escritos'].forEach(function(sec) {
+    (state.pendientes[sec] || []).forEach(function(obj) {
+      rows.push([sec, JSON.stringify(obj || {})]);
+    });
+  });
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_PENDIENTES, action: 'write', rows }) });
+    setSync('saved', 'Guardado');
+    setTimeout(function() { setSync('', 'Listo'); }, 2000);
+  } catch(e) { setSync('error', 'Error al guardar pendientes'); }
+}
+async function saveArchivoSheet() {
+  setSync('saving', 'Guardando...');
+  const rows = [ARCH_COLS.slice()];
+  (state.archivo || []).forEach(function(it) {
+    rows.push([
+      it.seccion || '',
+      JSON.stringify(it.data || {}),
+      it.req || '', it.dem || '',
+      it.user || '', it.fecha || '', it.estado || ''
+    ]);
+  });
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_ARCHIVO, action: 'write', rows }) });
+    setSync('saved', 'Guardado');
+    setTimeout(function() { setSync('', 'Listo'); }, 2000);
+  } catch(e) { setSync('error', 'Error al guardar archivo'); }
 }
 function saveNotas() {
   try { localStorage.setItem('tm_notas_' + currentUser, JSON.stringify(state.notas[currentUser] || [])); } catch(e) {}
@@ -948,7 +1030,31 @@ function showSec(id, el) {
   document.getElementById('sec-' + id).classList.add('active');
   document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   if (el && el.classList && el.classList.contains('nav-tab')) el.classList.add('active');
+  // Al entrar a una pestaña compartida, refrescar desde Sheets para ver cambios de otros users.
+  if (currentUser && (id === 'calendario' || id === 'tareas' || id === 'causas' || id === 'cobros')) {
+    refreshShared();
+  }
 }
+// Re-fetch de datos compartidos (calendario + pendientes + archivo + causas) sin parpadeo.
+let _refreshInFlight = false;
+async function refreshShared() {
+  if (_refreshInFlight || !currentUser) return;
+  _refreshInFlight = true;
+  try {
+    const [lab, cyc, caut, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAUTELARES), fetchSheet(SHEET_CAL)]);
+    state.laboral = parseSheet(lab, CAUSAS_COLS);
+    state.comercial = parseSheet(cyc, CAUSAS_COLS);
+    state.cautelares = parseSheet(caut, CAUSAS_COLS);
+    state.eventos = parseSheet(cal, EV_COLS);
+    try { const pend = await fetchSheet(SHEET_PENDIENTES); state.pendientes = parsePendientesSheet(pend); } catch(e) {}
+    try { const arch = await fetchSheet(SHEET_ARCHIVO); state.archivo = parseArchivoSheet(arch); } catch(e) {}
+    buildCalMeses(); buildCausasList();
+    renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderArchivo();
+  } catch(e) {}
+  finally { _refreshInFlight = false; }
+}
+// Cuando el user vuelve a la ventana, traer cambios de otros users.
+window.addEventListener('focus', function() { if (currentUser) refreshShared(); });
 function setFuero(f, el) {
   currentFuero = f;
   document.querySelectorAll('.fuero-tab').forEach(function(t) { t.classList.remove('active'); });
@@ -1651,7 +1757,9 @@ function renderCal(){
       if(calView==='list'){
         html+='<div class="event-card list-view '+evClass(e.tipo)+'">'+
           '<div><div class="ev-hora-big">'+(e.hora||'—')+'</div><div style="font-size:10px;color:#758B8F;text-transform:uppercase;font-weight:700;margin-top:2px">'+(e.tipo||'')+'</div></div>'+
-          '<div><div class="ev-causa">'+(e.causa||'—')+'</div>'+(obsText?'<div class="ev-obs">'+obsText+'</div>':'')+'</div>'+
+          '<div><div class="ev-causa">'+(e.causa||'—')+'</div>'+(obsText?'<div class="ev-obs">'+obsText+'</div>':'')+
+          (e.resp?'<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">'+(e.resp.split(',').filter(Boolean).map(function(u){return '<span class="resp-pill">👨\u200d💼 '+u.charAt(0).toUpperCase()+u.slice(1)+'</span>';}).join(''))+'</div>':'')+
+          '</div>'+
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
           (linkUrl?'<a href="'+linkUrl+'" target="_blank" style="font-size:12px;color:#2F4F56;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none">📹 Link</a>':'')+
           '<a href="'+buildGCalLink(e)+'" target="_blank" style="font-size:11px;color:#4285f4;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap">📅 Agendar</a>'+
