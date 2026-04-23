@@ -471,7 +471,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   </div>
   <div class="sub-panel active" id="spanel-escritos">
     <div class="pend-table-wrap"><table>
-      <thead><tr><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th></th></tr></thead>
+      <thead><tr><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th>Fecha / Evento</th><th></th></tr></thead>
       <tbody id="tb-escritos"></tbody>
     </table></div>
   </div>
@@ -1423,6 +1423,18 @@ function syncHacerToEscritos(autos, hacer) {
   renderPendientes();
 }
 // When escrito is saved with autos, sync back to causa hacer field
+
+function openEvModalFromEscrito(idx) {
+  var row = state.pendientes.escritos[idx];
+  if (!row) return;
+  openEvModal();
+  setTimeout(function() {
+    var ef = document.getElementById('ev-fecha'); if (ef && row.fecha) ef.value = row.fecha;
+    var et = document.getElementById('ev-tipo');  if (et) et.value = 'PRESENTAR ESCRITO';
+    var ec = document.getElementById('ev-causa'); if (ec) ec.value = (row.autos||'') + (row.tarea ? ' — ' + row.tarea : '');
+    var eo = document.getElementById('ev-obs');   if (eo && row.detalle) eo.value = row.detalle;
+  }, 50);
+}
 function syncEscritoToCausa(autos, tarea) {
   if (!autos) return;
   ['laboral','comercial','cautelares'].forEach(function(fuero) {
@@ -1786,7 +1798,9 @@ function renderPendientes(){
   document.getElementById('tb-demanda').innerHTML=dem.length?dem.map(function(r,i){return'<tr><td>'+pInput(r.req,'req',i,'demanda','Requirente')+'</td><td>'+pInput(r.dem,'dem',i,'demanda','Demandado')+'</td><td><input value="'+(r.drive||'')+'" placeholder="Link Drive..." onchange="inputPend('+i+',\'demanda\',\'drive\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">'+(r.drive?'<a href="'+r.drive+'" target="_blank" style="font-size:11px;color:#2F4F56;display:block;margin-top:2px">Abrir →</a>':'')+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'demanda\')">×</button></td></tr>';}).join(''):'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
   document.getElementById('tb-prueba').innerHTML=pru.length?pru.map(function(r,i){return'<tr><td>'+pInput(r.req,'req',i,'prueba','Requirente')+'</td><td>'+pInput(r.dem,'dem',i,'prueba','Demandado')+'</td><td>'+spSel(r.doc||'no-aplica','doc',i,'prueba',['completa','incompleta','no-aplica'])+'</td><td>'+spSel(r.inf||'no-aplica','inf',i,'prueba',['completa','incompleta','no-aplica'])+'</td><td>'+spSel(r.test||'no-aplica','test',i,'prueba',['completa','incompleta','no-aplica'])+'</td><td>'+spSel(r.per||'no-aplica','per',i,'prueba',['completa','incompleta','no-aplica'])+'</td><td>'+spSel(r.docd||'no-aplica','docd',i,'prueba',['completa','incompleta','no-aplica'])+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'prueba\')">×</button></td></tr>';}).join(''):'<tr><td colspan="8" class="empty">Sin registros</td></tr>';
   document.getElementById('tb-sortear').innerHTML=sor.length?sor.map(function(r,i){return'<tr><td>'+pInput(r.req,'req',i,'sortear','Requirente')+'</td><td>'+pInput(r.dem,'dem',i,'sortear','Demandado')+'</td><td><input value="'+(r.drive||'')+'" placeholder="Link Drive..." onchange="inputPend('+i+',\'sortear\',\'drive\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">'+(r.drive?'<a href="'+r.drive+'" target="_blank" style="font-size:11px;color:#2F4F56;display:block;margin-top:2px">Abrir →</a>':'')+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'sortear\')">×</button></td></tr>';}).join(''):'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
-  document.getElementById('tb-escritos').innerHTML=esc.length?esc.map(function(r,i){return'<tr><td>'+pInput(r.tarea,'tarea',i,'escritos','Tarea...')+'</td><td>'+pInput(r.autos,'autos',i,'escritos','Autos / carátula...')+'</td><td><input value="'+(r.detalle||'')+'" placeholder="Detalle..." onchange="inputPend('+i+',\'escritos\',\'detalle\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px"></td><td><button class="btn-rm" onclick="rmPend('+i+',\'escritos\')">×</button></td></tr>';}).join(''):'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
+  document.getElementById('tb-escritos').innerHTML=esc.length?esc.map(function(r,i){
+    var calBtn = r.fecha ? '<button onclick="openEvModalFromEscrito('+i+')" title="Crear evento" style="padding:3px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4;margin-left:4px">📅</button>' : '';
+    return'<tr><td>'+pInput(r.tarea,'tarea',i,'escritos','Tarea...')+'</td><td>'+pInput(r.autos,'autos',i,'escritos','Autos / carátula...')+'</td><td><input value="'+(r.detalle||'')+'" placeholder="Detalle..." onchange="inputPend('+i+',\'escritos\',\'detalle\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px"></td><td style="white-space:nowrap"><input type="date" value="'+(r.fecha||'')+'" onchange="state.pendientes.escritos['+i+'].fecha=this.value;saveLocal();renderPendientes()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px">'+calBtn+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'escritos\')">×</button></td></tr>';}).join(''):'<tr><td colspan="5" class="empty">Sin registros</td></tr>';
 }
 function restaurarArchivo(idx){
   const item=state.archivo[idx];if(!item)return;
