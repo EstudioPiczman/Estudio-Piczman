@@ -808,14 +808,35 @@ async function loadAll() {
     state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
     // Pendientes y Archivo viven en Sheets para que sean universales entre users.
-    // Si las pestañas aún no existen en el Sheet, cae al cache local (migración suave).
+    // Si las pestañas aún no existen en el Sheet O están vacías, cae al cache local
+    // y sube lo del localStorage al Sheet (migración inicial one-time).
+    let pendSheetOk = false, archSheetOk = false;
     try {
       const pend = await fetchSheet(SHEET_PENDIENTES);
-      state.pendientes = parsePendientesSheet(pend);
+      const parsedPend = parsePendientesSheet(pend);
+      const totalPend = Object.keys(parsedPend).reduce(function(s,k){return s+(parsedPend[k]||[]).length;},0);
+      if (totalPend > 0) {
+        state.pendientes = parsedPend;
+        pendSheetOk = true;
+      } else {
+        // Sheet existe pero está vacío. Usar localStorage y subir al Sheet.
+        loadPendientesLocal();
+        const totalLocal = Object.keys(state.pendientes).reduce(function(s,k){return s+(state.pendientes[k]||[]).length;},0);
+        if (totalLocal > 0) savePendientesSheet();
+        pendSheetOk = true;
+      }
     } catch(e) { loadPendientesLocal(); }
     try {
       const arch = await fetchSheet(SHEET_ARCHIVO);
-      state.archivo = parseArchivoSheet(arch);
+      const parsedArch = parseArchivoSheet(arch);
+      if (parsedArch.length > 0) {
+        state.archivo = parsedArch;
+        archSheetOk = true;
+      } else {
+        loadArchivoLocal();
+        if ((state.archivo || []).length > 0) saveArchivoSheet();
+        archSheetOk = true;
+      }
     } catch(e) { loadArchivoLocal(); }
     loadLocal(); buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderNotas(); renderArchivo();
@@ -1046,8 +1067,18 @@ async function refreshShared() {
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
     state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
-    try { const pend = await fetchSheet(SHEET_PENDIENTES); state.pendientes = parsePendientesSheet(pend); } catch(e) {}
-    try { const arch = await fetchSheet(SHEET_ARCHIVO); state.archivo = parseArchivoSheet(arch); } catch(e) {}
+    // Ojo: si el Sheet devuelve vacío, NO pisar el state en memoria (puede haber una migración en curso).
+    try {
+      const pend = await fetchSheet(SHEET_PENDIENTES);
+      const parsedPend = parsePendientesSheet(pend);
+      const totalPend = Object.keys(parsedPend).reduce(function(s,k){return s+(parsedPend[k]||[]).length;},0);
+      if (totalPend > 0) state.pendientes = parsedPend;
+    } catch(e) {}
+    try {
+      const arch = await fetchSheet(SHEET_ARCHIVO);
+      const parsedArch = parseArchivoSheet(arch);
+      if (parsedArch.length > 0) state.archivo = parsedArch;
+    } catch(e) {}
     buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderArchivo();
   } catch(e) {}
