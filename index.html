@@ -2000,7 +2000,10 @@ function renderNotas(){
   const filtroFecha=(document.getElementById('notas-filtro-fecha')||{}).value||'';
   const wrap=document.getElementById('notas-container-wrap');
   let notas=(state.notas[currentUser]||[]).map(function(n,i){return Object.assign({},n,{_i:i});});
+  // Las completadas NO se muestran en la vista principal (igual que pendientes).
+  // Solo se ven si el user elige explícitamente el filtro "completado" o toca el botón "Completadas".
   if(filtroStatus)notas=notas.filter(function(n){return n.status===filtroStatus;});
+  else notas=notas.filter(function(n){return n.status!=='completado';});
   if(filtroFecha==='hoy')notas=notas.filter(function(n){return n.deadline===hoy;});
   else if(filtroFecha==='semana')notas=notas.filter(function(n){return n.deadline>=semana.start&&n.deadline<=semana.end;});
   else if(filtroFecha==='mes')notas=notas.filter(function(n){return n.deadline&&n.deadline.startsWith(mesActual);});
