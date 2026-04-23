@@ -439,13 +439,13 @@ tr.data-row.expanded td{background:#f5f0eb}
     </div>
   </div>
   <div class="sub-tabs">
-    <button class="sub-tab active" onclick="showSubTab('negociacion',this)">En negociación</button>
+    <button class="sub-tab active" onclick="showSubTab('escritos',this)">Escritos PJN</button>
+    <button class="sub-tab" onclick="showSubTab('negociacion',this)">En negociación</button>
     <button class="sub-tab" onclick="showSubTab('demanda',this)">Para hacer demanda</button>
     <button class="sub-tab" onclick="showSubTab('prueba',this)">Prueba pendiente</button>
     <button class="sub-tab" onclick="showSubTab('sortear',this)">Sortear y subir</button>
-    <button class="sub-tab" onclick="showSubTab('escritos',this)">Escritos PJN</button>
   </div>
-  <div class="sub-panel active" id="spanel-negociacion">
+  <div class="sub-panel" id="spanel-negociacion">
     <div class="pend-table-wrap"><table>
       <thead><tr><th>Requirente</th><th>Demandado</th><th>SECLO</th><th></th></tr></thead>
       <tbody id="tb-negociacion"></tbody>
@@ -469,7 +469,7 @@ tr.data-row.expanded td{background:#f5f0eb}
       <tbody id="tb-sortear"></tbody>
     </table></div>
   </div>
-  <div class="sub-panel" id="spanel-escritos">
+  <div class="sub-panel active" id="spanel-escritos">
     <div class="pend-table-wrap"><table>
       <thead><tr><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th></th></tr></thead>
       <tbody id="tb-escritos"></tbody>
@@ -760,7 +760,7 @@ const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','
 const EV_COLS = ['tipo','fechahora','causa','link','obs','resp'];
 
 let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
-let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'negociacion', calView = 'cards';
+let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'escritos', calView = 'cards';
 let cuotasCobroTemp = [], cobroIdx = null, cobroFuero = 'laboral';
 let cobrosTabActual = 'cobrar';
 let notasView = 'lista';
@@ -1765,7 +1765,16 @@ function inputPend(idx,tab,field,val){
     if (row && row.autos) syncEscritoToCausa(row.autos, row.tarea||'');
   }
 }
-function rmPend(idx,tab){state.pendientes[tab].splice(idx,1);saveLocal();renderPendientes();}
+function rmPend(idx,tab){
+  // If removing an escrito, also clear the causa's hacer field
+  if (tab==='escritos') {
+    var row = state.pendientes.escritos[idx];
+    if (row && row.autos) syncEscritoToCausa(row.autos, '');
+  }
+  state.pendientes[tab].splice(idx,1);
+  saveLocal();
+  renderPendientes();
+}
 function pInput(val,field,idx,tab,placeholder){
   const isAutos=(field==='req'||field==='dem'||field==='autos');
   const escaped=(val||'').replace(/"/g,'&quot;');
