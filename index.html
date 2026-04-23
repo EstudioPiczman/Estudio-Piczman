@@ -201,6 +201,11 @@ tr.data-row.expanded td{background:#f5f0eb}
 .prueba-toggle.on.pt-peric-c{background:#059669;border-color:#059669}
 .prueba-toggle.on.pt-peric-i{background:#065f46;border-color:#065f46}
 .prueba-toggle.on.pt-other{background:#d97706;border-color:#d97706}
+
+/* RESPONSABLES */
+.resp-btn{padding:4px 8px;border:1px solid #d4c9be;border-radius:20px;font-size:12px;background:#fff;cursor:pointer;transition:all .15s;font-family:'Montserrat',sans-serif}
+.resp-btn.active{background:#2F4F56;color:#F2EAE1;border-color:#2F4F56}
+.resp-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;background:#e8e0d8;color:#2F4F56}
 </style>
 </head>
 <body>
@@ -270,6 +275,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   <div class="fuero-tabs">
     <button class="fuero-tab active" onclick="setFuero('laboral',this)">Laboral</button>
     <button class="fuero-tab" onclick="setFuero('comercial',this)">Civil / Comercial</button>
+    <button class="fuero-tab" onclick="setFuero('cautelares',this)">Cautelares</button>
   </div>
   <div class="filters">
     <input class="search-input" type="text" id="search" placeholder="Buscar carátula, demandado, expediente..." oninput="renderTable()">
@@ -278,9 +284,6 @@ tr.data-row.expanded td{background:#f5f0eb}
       <option>Demanda/Contestación</option><option>Traba de litis</option>
       <option>Prueba</option><option>Sentencia</option>
       <option>Ejecución</option><option>Conciliado</option><option>Acuerdo conciliatorio</option>
-    </select>
-    <select id="f-hacer" onchange="renderTable()">
-      <option value="">Todos</option><option value="1">Con pendientes</option>
     </select>
     <button class="btn-primary" onclick="openCausaModal()">+ Nueva causa</button>
   </div>
@@ -318,6 +321,13 @@ tr.data-row.expanded td{background:#f5f0eb}
         <option value="mes">Este mes</option>
       </select>
       <select id="cal-mes" onchange="renderCal()"><option value="">Filtrar por mes</option></select>
+      <select id="cal-resp" onchange="renderCal()" style="padding:8px 11px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#2F4F56;font-size:13px;outline:none;font-family:'Montserrat',sans-serif">
+        <option value="">Todos los responsables</option>
+        <option value="mati">👨‍💼 Mati</option>
+        <option value="juan">👨‍💼 Juan</option>
+        <option value="bruno">👨‍💼 Bruno</option>
+        <option value="seba">👨‍💼 Seba</option>
+      </select>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <div class="view-toggle">
@@ -616,8 +626,9 @@ tr.data-row.expanded td{background:#f5f0eb}
           <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Pericial</label>
           <button onclick="addPericial()" class="btn-add-cuota" style="margin-top:0">+ Agregar otra</button>
         </div>
-        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Tipo</span>
+          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Observaciones</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. perito designado</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. pericial presentada</span>
           <span></span>
@@ -678,6 +689,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   <div class="modal-footer">
     <button class="btn-delete" id="btn-delete-causa" onclick="deleteCausa()" style="display:none">Eliminar causa</button>
     <div style="display:flex;gap:8px">
+      <button class="btn-cancel" onclick="descargarLegajo()" style="border-color:#2F4F56;color:#2F4F56">📄 Legajo</button>
       <button class="btn-cancel" onclick="closeCausaModal()">Cancelar</button>
       <button class="btn-save" onclick="saveCausa()">Guardar</button>
     </div>
@@ -714,6 +726,16 @@ tr.data-row.expanded td{background:#f5f0eb}
     <div class="form-group"><label>Contraseña / Pass</label><input id="ev-pass" type="text" placeholder="Ej: 0MEjEh"></div>
     <div class="form-group full"><label>Observaciones</label><textarea id="ev-obs" style="min-height:64px"></textarea></div>
   </div>
+  <div style="margin-bottom:1rem">
+    <label style="font-size:11px;color:#758B8F;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px">Responsable(s)</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="resp-btns">
+      <button type="button" class="resp-btn" onclick="toggleResp('mati')" id="resp-mati">👨‍💼 Mati</button>
+      <button type="button" class="resp-btn" onclick="toggleResp('juan')" id="resp-juan">👨‍💼 Juan</button>
+      <button type="button" class="resp-btn" onclick="toggleResp('bruno')" id="resp-bruno">👨‍💼 Bruno</button>
+      <button type="button" class="resp-btn" onclick="toggleResp('seba')" id="resp-seba">👨‍💼 Seba</button>
+    </div>
+    <input type="hidden" id="ev-resp">
+  </div>
   <div class="modal-footer">
     <button class="btn-delete" id="btn-delete-ev" onclick="deleteEv()" style="display:none">Eliminar</button>
     <div style="display:flex;gap:8px">
@@ -726,7 +748,7 @@ tr.data-row.expanded td{background:#f5f0eb}
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsdbRI2NNiYlw1LIRAJqB2jBxK4XmqNuNK24OpHeqRbTENXr0gaRTw5CqUA_N8PY4Xw/exec';
-const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario';
+const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario', SHEET_CAUTELARES = 'Status_Cautelares', SHEET_HISTORIAL = 'Historial';
 const USERS = { mati: 'trasmonte2024', juan: 'piczman2024', bruno: 'estudio2024', sebi: 'lanave2' };
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const ETAPA_CLASS = {
@@ -735,9 +757,9 @@ const ETAPA_CLASS = {
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
 const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
-const EV_COLS = ['tipo','fechahora','causa','link','obs'];
+const EV_COLS = ['tipo','fechahora','causa','link','obs','resp'];
 
-let state = { laboral:[], comercial:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
+let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
 let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'negociacion', calView = 'cards';
 let cuotasCobroTemp = [], cobroIdx = null, cobroFuero = 'laboral';
 let cobrosTabActual = 'cobrar';
@@ -778,9 +800,10 @@ function setSync(s, msg) {
 async function loadAll() {
   setSync('saving', 'Cargando...');
   try {
-    const [lab, cyc, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAL)]);
+    const [lab, cyc, caut, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAUTELARES), fetchSheet(SHEET_CAL)]);
     state.laboral = parseSheet(lab, CAUSAS_COLS);
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
+    state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
     loadLocal(); buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderNotas(); renderArchivo();
@@ -1012,11 +1035,9 @@ function renderTable() {
   const d = state[currentFuero];
   const q = (document.getElementById('search').value || '').toLowerCase();
   const et = document.getElementById('f-etapa').value;
-  const hac = document.getElementById('f-hacer').value;
   const rows = d.map(function(c,i) { return Object.assign({},c,{_i:i}); }).filter(function(c) {
     if (q && !c.autos.toLowerCase().includes(q) && !c.expte.toLowerCase().includes(q) && !(c.juzgado||'').toLowerCase().includes(q)) return false;
     if (et && c.etapa !== et) return false;
-    if (hac === '1' && (!c.hacer || !c.hacer.trim())) return false;
     return true;
   });
   const tb = document.getElementById('tbody');
@@ -1033,6 +1054,26 @@ function renderTable() {
   }).join('');
 }
 
+
+
+// HISTORIAL
+async function logHistorial(tipo, sheet, autos, detalle, data) {
+  try {
+    const row = [tipo, new Date().toLocaleString('es-AR'), currentUser, sheet, autos, detalle, JSON.stringify(data)];
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_HISTORIAL, action: 'append', row }) });
+  } catch(e) { console.warn('Historial error:', e); }
+}
+// FUERO SHEET HELPER
+function getFueroSheet(fuero) {
+  if (fuero === 'comercial') return SHEET_COMERCIAL;
+  if (fuero === 'cautelares') return SHEET_CAUTELARES;
+  return SHEET_LABORAL;
+}
+function getFueroState(fuero) {
+  if (fuero === 'comercial') return state.comercial;
+  if (fuero === 'cautelares') return state.cautelares;
+  return state.laboral;
+}
 // *** FIX: showMTab with calendario support — NO override, direct implementation ***
 function showMTab(id, el) {
   document.querySelectorAll('.modal-tab').forEach(function(t) { t.classList.remove('active'); });
@@ -1117,18 +1158,22 @@ function saveCausa() {
     drive: document.getElementById('f-drive') ? document.getElementById('f-drive').value : '',
     tasaPct: ''
   };
-  const arr = state[fuero === 'laboral' ? 'laboral' : 'comercial'];
+  const arr = getFueroState(fuero);
   if (editCausaIdx !== null && fuero === currentFuero) arr[editCausaIdx] = obj;
   else arr.push(obj);
   arr.sort(function(a,b) { return (a.autos||'').localeCompare(b.autos||'','es',{sensitivity:'base'}); });
   closeCausaModal();
-  saveSheet(fuero === 'laboral' ? SHEET_LABORAL : SHEET_COMERCIAL, arr, CAUSAS_COLS);
+  saveSheet(getFueroSheet(fuero), arr, CAUSAS_COLS);
+  // Sync hacer -> escritos
+  syncHacerToEscritos(obj.autos, obj.hacer);
   renderMetrics(); renderTable(); renderTotales(); buildCausasList();
 }
 function deleteCausa() {
   if (!confirm('¿Eliminar esta causa?')) return;
+  var causa = state[currentFuero][editCausaIdx];
+  logHistorial('causa_borrada', getFueroSheet(currentFuero), causa.autos||'', causa.etapa||'', causa);
   state[currentFuero].splice(editCausaIdx, 1); closeCausaModal();
-  saveSheet(currentFuero === 'laboral' ? SHEET_LABORAL : SHEET_COMERCIAL, state[currentFuero], CAUSAS_COLS);
+  saveSheet(getFueroSheet(currentFuero), state[currentFuero], CAUSAS_COLS);
   renderMetrics(); renderTable(); renderTotales();
 }
 function renderCuotas() {
@@ -1158,11 +1203,15 @@ function renderOficios() {
   var stColors = {'pendiente':'#fef3c7','enviado':'#dbeafe','recibido':'#d1fae5','respondido':'#d1fae5','no-aplica':'#f3f4f6'};
   el.innerHTML = oficiosTemp.map(function(o, i) {
     var bg = stColors[o.estado]||'#faf7f4', has = !!(o.dest&&o.dest.trim());
+    var needEnv = has && !o.fsEnv && !o.fsRec;
+    var needRec = has && !o.fsRec;
+    var sEnv = 'padding:5px 7px;border:1px solid '+(needEnv?'#fca5a5':'#d4c9be')+';border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;background:'+(needEnv?'#fef2f2':'#fff');
+    var sRec = 'padding:5px 7px;border:1px solid '+(needRec?'#fca5a5':'#d4c9be')+';border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;background:'+(needRec?'#fef2f2':'#fff');
     return '<div style="display:grid;grid-template-columns:44px 1.8fr 1fr 1fr 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<span style="font-size:11px;font-weight:700;color:#758B8F;text-align:center">#'+(i+1)+'</span>' +
       '<input value="'+(o.dest||'').replace(/"/g,'&quot;')+'" placeholder="Destinatario..." onchange="oficiosTemp['+i+'].dest=this.value;renderOficios()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input value="'+(o.fsEnv||'')+'" placeholder="Fs. enviado" onchange="oficiosTemp['+i+'].fsEnv=this.value;renderOficios()" style="'+fsStyle(o.fsEnv,has)+'">' +
-      '<input value="'+(o.fsRec||'')+'" placeholder="Fs. recibido" onchange="oficiosTemp['+i+'].fsRec=this.value;renderOficios()" style="'+fsStyle(o.fsRec,has)+'">' +
+      '<input value="'+(o.fsEnv||'')+'" placeholder="Fs. enviado" onchange="oficiosTemp['+i+'].fsEnv=this.value;renderOficios()" style="'+sEnv+'">' +
+      '<input value="'+(o.fsRec||'')+'" placeholder="Fs. recibido" onchange="oficiosTemp['+i+'].fsRec=this.value;renderOficios()" style="'+sRec+'">' +
       '<select onchange="oficiosTemp['+i+'].estado=this.value;renderOficios()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
         OFICIO_ESTADOS.map(function(s){return '<option value="'+s+'"'+(o.estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';}).join('') +
       '</select>' +
@@ -1179,7 +1228,7 @@ function renderTestigos() {
     var calBtn = t.fojas ? '<button onclick="addTestigoToCal('+i+')" title="Agregar al calendario" style="padding:4px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4">📅</button>' : '<span style="width:28px;display:inline-block"></span>';
     return '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1.1fr auto auto;gap:6px;align-items:center;padding:6px 8px;background:#faf7f4;border-radius:7px;border-left:3px solid #d4c9be">' +
       '<input value="'+(t.nombre||'').replace(/"/g,'&quot;')+'" placeholder="Nombre del testigo..." onchange="testigosTemp['+i+'].nombre=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
-      '<input type="date" value="'+(t.fojas||'')+'" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="'+fsStyle(t.fojas,has)+'">' +
+      '<input type="date" value="'+(t.fojas||'')+'" onchange="testigosTemp['+i+'].fojas=this.value;renderTestigos()" style="'+(estado==='declar\u00f3'?'padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;background:#fff':fsStyle(t.fojas,has))+'">' +
       '<input value="'+(t.obs||'').replace(/"/g,'&quot;')+'" placeholder="Observaciones..." onchange="testigosTemp['+i+'].obs=this.value" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">' +
       '<select onchange="testigosTemp['+i+'].estado=this.value;renderTestigos()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;background:'+bg+';font-weight:600">' +
         ['pendiente','declar\u00f3','incompareci\u00f3'].map(function(s){return '<option value="'+s+'"'+(estado===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';}).join('') +
@@ -1264,6 +1313,8 @@ function renderModalCalendario() {
 }
 function deleteEvFromModal(idx) {
   if (!confirm('\u00bfBorrar este evento del calendario?')) return;
+  var ev=state.eventos[idx];
+  logHistorial('evento_borrado',SHEET_CAL,ev.causa||'',(ev.tipo||'')+(ev.fecha?' - '+ev.fecha:''),ev);
   state.eventos.splice(idx, 1);
   saveSheet(SHEET_CAL, state.eventos, EV_COLS);
   buildCalMeses(); renderCal(); renderModalCalendario();
@@ -1286,6 +1337,114 @@ function addTestigoToCal(i) {
   }, 50);
 }
 
+
+
+
+// LEGAJO PDF
+function descargarLegajo() {
+  var d = editCausaIdx !== null ? state[currentFuero][editCausaIdx] : {};
+  var autos = document.getElementById('f-autos').value || d.autos || 'Sin carátula';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>';
+  html += 'body{font-family:Montserrat,sans-serif;color:#2F4F56;background:#F2EAE1;padding:2rem;max-width:900px;margin:0 auto}';
+  html += 'h1{font-family:"DM Serif Text",serif;font-size:22px;color:#2F4F56;margin-bottom:0.5rem}';
+  html += 'h2{font-family:"DM Serif Text",serif;font-size:16px;color:#2F4F56;margin:1.5rem 0 0.5rem;border-bottom:2px solid #2F4F56;padding-bottom:4px}';
+  html += '.field{margin-bottom:0.5rem}.label{font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.06em}';
+  html += '.val{font-size:13px;color:#2F4F56;margin-top:2px}';
+  html += 'table{width:100%;border-collapse:collapse;margin-top:0.5rem}';
+  html += 'th{background:#2F4F56;color:#F2EAE1;padding:6px 10px;font-size:11px;text-align:left}';
+  html += 'td{padding:6px 10px;font-size:12px;border-bottom:1px solid #e8e0d8}';
+  html += '.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#dbeafe;color:#1e40af}';
+  html += '@media print{body{background:#fff}}';
+  html += '</style></head><body>';
+  html += '<h1>' + autos + '</h1>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">';
+  html += fld('Expediente', document.getElementById('f-expte').value||d.expte||'—');
+  html += fld('Juzgado', document.getElementById('f-juzgado').value||d.juzgado||'—');
+  html += fld('Etapa', document.getElementById('f-etapa-m').value||d.etapa||'—');
+  html += '</div>';
+  // Detalle
+  var detalle = document.getElementById('f-detalle').value||d.detalle||'';
+  if (detalle) html += '<h2>Último movimiento</h2><div style="font-size:13px;line-height:1.6">' + detalle + '</div>';
+  // Para hacer
+  var hacer = document.getElementById('f-hacer').value||d.hacer||'';
+  if (hacer) html += '<h2>Para hacer</h2><div style="font-size:13px;background:#fef3c7;padding:8px 12px;border-radius:6px;color:#92400e">' + hacer + '</div>';
+  // Prueba
+  var pruebas = document.getElementById('f-pruebas').value||d.pruebas||'';
+  if (pruebas||oficiosTemp.length||testigosTemp.length||pericialTemp.length) {
+    html += '<h2>Prueba</h2>';
+    if (pruebas) html += '<div style="margin-bottom:0.5rem">' + pruebas.split(',').map(function(p){return '<span class="badge" style="margin-right:4px">'+p.trim()+'</span>';}).join('') + '</div>';
+    if (oficiosTemp.length) {
+      html += '<div class="label" style="margin:0.75rem 0 0.25rem">Oficios</div><table><tr><th>Destinatario</th><th>Fs. enviado</th><th>Fs. recibido</th><th>Estado</th></tr>';
+      oficiosTemp.forEach(function(o){html+='<tr><td>'+o.dest+'</td><td>'+(o.fsEnv||'—')+'</td><td>'+(o.fsRec||'—')+'</td><td>'+o.estado+'</td></tr>';});
+      html += '</table>';
+    }
+    if (testigosTemp.length) {
+      html += '<div class="label" style="margin:0.75rem 0 0.25rem">Testigos</div><table><tr><th>Nombre</th><th>Fecha audiencia</th><th>Observaciones</th><th>Estado</th></tr>';
+      testigosTemp.forEach(function(t){html+='<tr><td>'+t.nombre+'</td><td>'+(t.fojas||'—')+'</td><td>'+(t.obs||'—')+'</td><td>'+t.estado+'</td></tr>';});
+      html += '</table>';
+    }
+    if (pericialTemp.length) {
+      html += '<div class="label" style="margin:0.75rem 0 0.25rem">Pericial</div><table><tr><th>Tipo</th><th>Observaciones</th><th>Fs. designado</th><th>Fs. presentada</th></tr>';
+      pericialTemp.forEach(function(p){html+='<tr><td>'+p.tipo+'</td><td>'+(p.obs||'—')+'</td><td>'+(p.fsDesig||'—')+'</td><td>'+(p.fsPresent||'—')+'</td></tr>';});
+      html += '</table>';
+    }
+    var obs = document.getElementById('f-pend-prueba').value||d.pendPrueba||'';
+    if (obs) html += '<div style="margin-top:0.5rem;font-size:12px;color:#758B8F"><b>Observaciones:</b> '+obs+'</div>';
+  }
+  html += '<div style="margin-top:2rem;font-size:11px;color:#758B8F;border-top:1px solid #d4c9be;padding-top:8px">Trasmonte &amp; Asociados — Generado ' + new Date().toLocaleDateString('es-AR') + '</div>';
+  html += '</body></html>';
+  var w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.print();},500);
+}
+function fld(label, val) {
+  return '<div class="field"><div class="label">'+label+'</div><div class="val">'+val+'</div></div>';
+}
+// SYNC Para hacer <-> Escritos
+function syncHacerToEscritos(autos, hacer) {
+  if (!autos) return;
+  if (!state.pendientes.escritos) state.pendientes.escritos = [];
+  // Find existing escrito for this causa
+  var existing = state.pendientes.escritos.filter(function(e) { return e.autos === autos; });
+  if (hacer && hacer.trim()) {
+    if (existing.length === 0) {
+      // Create new escrito entry
+      state.pendientes.escritos.push({ tarea: hacer.trim(), autos: autos, detalle: '' });
+    } else {
+      // Update tarea of existing entry
+      existing[0].tarea = hacer.trim();
+    }
+  } else {
+    // Remove if hacer was cleared
+    state.pendientes.escritos = state.pendientes.escritos.filter(function(e) { return e.autos !== autos; });
+  }
+  saveLocal();
+  renderPendientes();
+}
+// When escrito is saved with autos, sync back to causa hacer field
+function syncEscritoToCausa(autos, tarea) {
+  if (!autos) return;
+  ['laboral','comercial','cautelares'].forEach(function(fuero) {
+    var arr = state[fuero] || [];
+    var causa = arr.find(function(c) { return c.autos === autos; });
+    if (causa) {
+      causa.hacer = tarea;
+      saveSheet(getFueroSheet(fuero), arr, CAUSAS_COLS);
+    }
+  });
+}
+function toggleResp(user) {
+  var inp = document.getElementById('ev-resp');
+  var vals = inp.value ? inp.value.split(',') : [];
+  var idx = vals.indexOf(user);
+  if (idx >= 0) vals.splice(idx, 1); else vals.push(user);
+  inp.value = vals.join(',');
+  ['mati','juan','bruno','seba'].forEach(function(u) {
+    var btn = document.getElementById('resp-'+u);
+    if (btn) btn.classList.toggle('active', vals.includes(u));
+  });
+}
 function calcInteresSimple(capital, desde, hasta, tasa, ipcPct) {
   if (!capital||!desde||!hasta||!tasa) return null;
   const d1 = new Date(desde), d2 = new Date(hasta);
@@ -1432,9 +1591,11 @@ function renderCal(){
   const q=(document.getElementById('cal-search').value||'').toLowerCase();
   const tipo=document.getElementById('cal-tipo').value, mes=document.getElementById('cal-mes').value, vista=document.getElementById('cal-vista').value;
   const hoy=new Date().toISOString().slice(0,10), semana=getWeekRange(), mesActual=hoy.substring(0,7);
+  const calResp = document.getElementById('cal-resp') ? document.getElementById('cal-resp').value : '';
   const evs=state.eventos.map(function(e,i){return Object.assign({},e,{_i:i});}).filter(function(e){
     if(q&&!(e.causa||'').toLowerCase().includes(q)&&!(e.tipo||'').toLowerCase().includes(q)&&!(e.obs||'').toLowerCase().includes(q))return false;
     if(tipo&&e.tipo!==tipo)return false; if(mes&&!(e.fecha||'').startsWith(mes))return false;
+    if(calResp&&!(e.resp||'').includes(calResp))return false;
     if(vista==='dia'&&e.fecha!==hoy)return false;
     if(vista==='semana'&&(e.fecha<semana.start||e.fecha>semana.end))return false;
     if(vista==='mes'&&!(e.fecha||'').startsWith(mesActual))return false;
@@ -1466,6 +1627,7 @@ function renderCal(){
           '<div class="ev-causa">'+(e.causa||'—')+'</div>'+
           (obsText?'<div class="ev-obs">'+obsText+'</div>':'')+
           (linkUrl?'<div class="ev-link"><a href="'+linkUrl+'" target="_blank">📹 Abrir videoconferencia</a></div>':'')+
+          (e.resp?'<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">'+(e.resp.split(',').filter(Boolean).map(function(u){return '<span class="resp-pill">👨\u200d💼 '+u.charAt(0).toUpperCase()+u.slice(1)+'</span>';}).join(''))+'</div>':'')+
           '<div class="ev-actions"><button class="ev-btn" onclick="openEvModal('+e._i+')">Editar</button>'+
           '<a href="'+buildGCalLink(e)+'" target="_blank" class="ev-btn" style="text-decoration:none;color:#4285f4;border-color:#c5d9f8">📅 Agendar</a></div></div>';
       }
@@ -1494,17 +1656,26 @@ function openEvModal(idx){
   const evid=document.getElementById('ev-id');if(evid)evid.value=e.evid||'';
   const evpass=document.getElementById('ev-pass');if(evpass)evpass.value=e.evpass||'';
   document.getElementById('ev-obs').value=e.obs||'';
+  // Load responsables
+  var evResp = e.resp || '';
+  document.getElementById('ev-resp').value = evResp;
+  ['mati','juan','bruno','seba'].forEach(function(u) {
+    var btn = document.getElementById('resp-'+u);
+    if (btn) btn.classList.toggle('active', evResp.includes(u));
+  });
   document.getElementById('modal-ev-bg').classList.add('open');
 }
 function closeEvModal(){document.getElementById('modal-ev-bg').classList.remove('open');}
 function saveEv(){
   const fecha=document.getElementById('ev-fecha').value, hora=document.getElementById('ev-hora').value;
-  const obj={tipo:document.getElementById('ev-tipo').value,fechahora:fecha&&hora?fecha+' '+hora:fecha||hora||'',fecha:fecha,hora:hora,causa:document.getElementById('ev-causa').value,link:document.getElementById('ev-link').value,obs:document.getElementById('ev-obs').value};
+  const obj={tipo:document.getElementById('ev-tipo').value,fechahora:fecha&&hora?fecha+' '+hora:fecha||hora||'',fecha:fecha,hora:hora,causa:document.getElementById('ev-causa').value,link:document.getElementById('ev-link').value,obs:document.getElementById('ev-obs').value,resp:document.getElementById('ev-resp').value};
   if(editEvIdx!==null)state.eventos[editEvIdx]=obj; else state.eventos.push(obj);
   closeEvModal(); saveSheet(SHEET_CAL,state.eventos,EV_COLS); buildCalMeses(); renderCal();
 }
 function deleteEv(){
   if(!confirm('\u00bfEliminar este evento?'))return;
+  var ev=state.eventos[editEvIdx];
+  logHistorial('evento_borrado',SHEET_CAL,ev.causa||'',(ev.tipo||'')+(ev.fecha?' - '+ev.fecha:''),ev);
   state.eventos.splice(editEvIdx,1); closeEvModal();
   saveSheet(SHEET_CAL,state.eventos,EV_COLS); buildCalMeses(); renderCal();
 }
@@ -1585,7 +1756,15 @@ function updatePendStatus(idx,tab,field,sel){
     state.pendientes[tab].splice(idx,1); saveLocal(); renderPendientes(); renderArchivo();
   } else saveLocal();
 }
-function inputPend(idx,tab,field,val){state.pendientes[tab][idx][field]=val;saveLocal();}
+function inputPend(idx,tab,field,val){
+  state.pendientes[tab][idx][field]=val;
+  saveLocal();
+  // Sync escrito -> causa
+  if (tab==='escritos' && (field==='tarea'||field==='autos')) {
+    var row = state.pendientes.escritos[idx];
+    if (row && row.autos) syncEscritoToCausa(row.autos, row.tarea||'');
+  }
+}
 function rmPend(idx,tab){state.pendientes[tab].splice(idx,1);saveLocal();renderPendientes();}
 function pInput(val,field,idx,tab,placeholder){
   const isAutos=(field==='req'||field==='dem'||field==='autos');
