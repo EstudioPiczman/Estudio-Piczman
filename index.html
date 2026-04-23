@@ -471,7 +471,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   </div>
   <div class="sub-panel active" id="spanel-escritos">
     <div class="pend-table-wrap"><table>
-      <thead><tr><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th>Fecha / Evento</th><th></th></tr></thead>
+      <thead><tr><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th>Fecha / Evento</th><th>Estado</th><th></th></tr></thead>
       <tbody id="tb-escritos"></tbody>
     </table></div>
   </div>
@@ -1027,7 +1027,7 @@ function renderMetrics() {
   }).join(' ');
   document.getElementById('metrics-box').innerHTML =
     '<div class="metric"><div class="metric-label">Total causas</div><div class="metric-value">' + d.length + '</div></div>' +
-    '<div class="metric danger"><div class="metric-label">Con pendientes</div><div class="metric-value">' + pend + '</div></div>' +
+
     '<div class="metric" style="grid-column:span 3;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><div class="metric-label" style="width:100%;margin-bottom:4px">Por etapa</div>' + etHtml + '</div>';
 }
 function etapaBadge(e) { return '<span class="badge ' + (ETAPA_CLASS[e]||'b-nd') + '">' + (e||'—') + '</span>'; }
@@ -1424,14 +1424,37 @@ function syncHacerToEscritos(autos, hacer) {
 }
 // When escrito is saved with autos, sync back to causa hacer field
 
+
+function updateEscritoEstado(idx, val) {
+  if (!state.pendientes.escritos[idx]) return;
+  state.pendientes.escritos[idx].estado = val;
+  if (val === 'completado') {
+    var r = state.pendientes.escritos[idx];
+    state.archivo.push({
+      seccion: 'escritos',
+      data: JSON.parse(JSON.stringify(r)),
+      req: r.tarea || '',
+      dem: r.autos || '',
+      user: currentUser,
+      fecha: new Date().toLocaleDateString('es-AR')
+    });
+    state.pendientes.escritos.splice(idx, 1);
+    saveLocal();
+    renderPendientes();
+    renderArchivo();
+  } else {
+    saveLocal();
+    renderPendientes();
+  }
+}
 function openEvModalFromEscrito(idx) {
   var row = state.pendientes.escritos[idx];
   if (!row) return;
   openEvModal();
   setTimeout(function() {
     var ef = document.getElementById('ev-fecha'); if (ef && row.fecha) ef.value = row.fecha;
-    var et = document.getElementById('ev-tipo');  if (et) et.value = 'PRESENTAR ESCRITO';
-    var ec = document.getElementById('ev-causa'); if (ec) ec.value = (row.autos||'') + (row.tarea ? ' — ' + row.tarea : '');
+    var et = document.getElementById('ev-tipo');  if (et) et.value = row.tarea || 'PRESENTAR ESCRITO';
+    var ec = document.getElementById('ev-causa'); if (ec) ec.value = row.autos||'';
     var eo = document.getElementById('ev-obs');   if (eo && row.detalle) eo.value = row.detalle;
   }, 50);
 }
@@ -1800,7 +1823,7 @@ function renderPendientes(){
   document.getElementById('tb-sortear').innerHTML=sor.length?sor.map(function(r,i){return'<tr><td>'+pInput(r.req,'req',i,'sortear','Requirente')+'</td><td>'+pInput(r.dem,'dem',i,'sortear','Demandado')+'</td><td><input value="'+(r.drive||'')+'" placeholder="Link Drive..." onchange="inputPend('+i+',\'sortear\',\'drive\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px">'+(r.drive?'<a href="'+r.drive+'" target="_blank" style="font-size:11px;color:#2F4F56;display:block;margin-top:2px">Abrir →</a>':'')+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'sortear\')">×</button></td></tr>';}).join(''):'<tr><td colspan="4" class="empty">Sin registros</td></tr>';
   document.getElementById('tb-escritos').innerHTML=esc.length?esc.map(function(r,i){
     var calBtn = r.fecha ? '<button onclick="openEvModalFromEscrito('+i+')" title="Crear evento" style="padding:3px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4;margin-left:4px">📅</button>' : '';
-    return'<tr><td>'+pInput(r.tarea,'tarea',i,'escritos','Tarea...')+'</td><td>'+pInput(r.autos,'autos',i,'escritos','Autos / carátula...')+'</td><td><input value="'+(r.detalle||'')+'" placeholder="Detalle..." onchange="inputPend('+i+',\'escritos\',\'detalle\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px"></td><td style="white-space:nowrap"><input type="date" value="'+(r.fecha||'')+'" onchange="state.pendientes.escritos['+i+'].fecha=this.value;saveLocal();renderPendientes()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px">'+calBtn+'</td><td><button class="btn-rm" onclick="rmPend('+i+',\'escritos\')">×</button></td></tr>';}).join(''):'<tr><td colspan="5" class="empty">Sin registros</td></tr>';
+    return'<tr><td>'+pInput(r.tarea,'tarea',i,'escritos','Tarea...')+'</td><td>'+pInput(r.autos,'autos',i,'escritos','Autos / carátula...')+'</td><td><input value="'+(r.detalle||'')+'" placeholder="Detalle..." onchange="inputPend('+i+',\'escritos\',\'detalle\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px"></td><td style="white-space:nowrap"><input type="date" value="'+(r.fecha||'')+'" onchange="state.pendientes.escritos['+i+'].fecha=this.value;saveLocal();renderPendientes()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px">'+calBtn+'</td><td><select onchange="updateEscritoEstado('+i+',this.value)" style="padding:5px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;cursor:pointer;font-weight:600;background:'+(r.estado==='completado'?'#d1fae5':'#fef3c7')+';color:'+(r.estado==='completado'?'#065f46':'#92400e')+'"><option value="pendiente"'+(r.estado!=='completado'?' selected':'')+'>Pendiente</option><option value="completado"'+(r.estado==='completado'?' selected':'')+'>Completado</option></select></td><td><button class="btn-rm" onclick="rmPend('+i+',\'escritos\')">×</button></td></tr>';}).join(''):'<tr><td colspan="6" class="empty">Sin registros</td></tr>';
 }
 function restaurarArchivo(idx){
   const item=state.archivo[idx];if(!item)return;
