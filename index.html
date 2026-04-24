@@ -731,9 +731,9 @@ const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink'];
 
 let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[],telegrama:[]}, notas:{}, archivo:[] };
 // Vista unificada de pendientes: cada item lleva implícita su categoría (según el array donde vive).
-const PEND_CATS = ['escritos','telegrama','negociacion','demanda','prueba','sortear'];
-const CAT_LABEL = {escritos:'Escritos PJN', telegrama:'Telegrama/CD', negociacion:'En negociación', demanda:'Para hacer demanda', prueba:'Prueba pendiente', sortear:'Sortear y subir'};
-const CAT_COLOR = {escritos:'#4285f4', telegrama:'#8b5cf6', negociacion:'#059669', demanda:'#d97706', prueba:'#e24b4a', sortear:'#0891b2'};
+const PEND_CATS = ['escritos','telegrama','negociacion','demanda','sortear'];
+const CAT_LABEL = {escritos:'Escritos PJN', telegrama:'Telegrama/CD', negociacion:'En negociación', demanda:'Para hacer demanda', sortear:'Sortear y subir'};
+const CAT_COLOR = {escritos:'#4285f4', telegrama:'#8b5cf6', negociacion:'#059669', demanda:'#d97706', sortear:'#0891b2'};
 let pendFilterCats = new Set(PEND_CATS);
 let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'escritos', calView = 'cards';
 let cuotasCobroTemp = [], cobroIdx = null, cobroFuero = 'laboral';
