@@ -983,21 +983,41 @@ function parseNotasSheet(rows) {
 }
 let _notasSaveTimer = null;
 let _notasSaveRetry = 0;
-async function saveNotasSheet() {
-  setSync('saving', 'Guardando...');
+function _buildNotasRows() {
   const rows = [NOTAS_COLS.slice()];
   Object.keys(state.notas || {}).forEach(function(u) {
     (state.notas[u] || []).forEach(function(n) {
       rows.push([u, JSON.stringify(n || {})]);
     });
   });
+  return rows;
+}
+async function saveNotasSheet() {
+  setSync('saving', 'Guardando...');
+  const payload = JSON.stringify({ sheet: SHEET_NOTAS, action: 'write', rows: _buildNotasRows() });
   try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_NOTAS, action: 'write', rows }) });
+    const r = await fetch(SCRIPT_URL, { method: 'POST', body: payload });
+    // fetch() NO arroja en HTTP 4xx/5xx — chequear ok y parsear respuesta.
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    // Apps Script puede devolver {error:"..."} con status 200. Intentar parsear.
+    if (txt) {
+      try {
+        const j = JSON.parse(txt);
+        if (j && j.error) throw new Error(j.error);
+      } catch(parseErr) {
+        // No es JSON válido. Si el body menciona "error", tratar como fallo.
+        if (parseErr.message && parseErr.message !== 'Unexpected end of JSON input' && !(parseErr instanceof SyntaxError)) {
+          throw parseErr;
+        }
+      }
+    }
     _notasSaveRetry = 0;
     setSync('saved', 'Guardado');
     setTimeout(function() { setSync('', 'Listo'); }, 2000);
   } catch(e) {
-    // Reintento exponencial hasta 2 veces antes de avisar error (la data ya está en localStorage).
+    console.error('[saveNotasSheet] fallo:', e && e.message ? e.message : e);
+    // Reintento hasta 2 veces antes de avisar error (la data ya está en localStorage).
     if (_notasSaveRetry < 2) {
       _notasSaveRetry++;
       setSync('saving', 'Reintentando...');
@@ -1005,11 +1025,29 @@ async function saveNotasSheet() {
     } else {
       _notasSaveRetry = 0;
       setSync('error', 'Sin conexión — queda guardado en este navegador');
-      // Limpiar el estado de error al cabo de 5s
       setTimeout(function() { setSync('', 'Listo'); }, 5000);
     }
   }
 }
+// Flush sincrónico via sendBeacon cuando el user cierra la pestaña o cambia a otra.
+function _flushNotasSync() {
+  if (!_notasSaveTimer) return;
+  clearTimeout(_notasSaveTimer);
+  _notasSaveTimer = null;
+  try {
+    const payload = JSON.stringify({ sheet: SHEET_NOTAS, action: 'write', rows: _buildNotasRows() });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(SCRIPT_URL, payload);
+    } else {
+      // Fallback: fetch con keepalive.
+      fetch(SCRIPT_URL, { method: 'POST', body: payload, keepalive: true });
+    }
+  } catch(e) { console.error('[flushNotas] fallo:', e); }
+}
+window.addEventListener('beforeunload', _flushNotasSync);
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') _flushNotasSync();
+});
 function saveNotas() {
   // Cache local INMEDIATO (siempre se persiste, nada se pierde aunque falle la red).
   try { localStorage.setItem('tm_notas_' + currentUser, JSON.stringify(state.notas[currentUser] || [])); } catch(e) {}
