@@ -743,7 +743,7 @@ tr.data-row.expanded td{background:#f5f0eb}
     <input type="hidden" id="pend-resp">
   </div>
   <div class="modal-footer">
-    <div></div>
+    <button type="button" onclick="savePendAndAgendar()" style="padding:8px 14px;background:#fff;border:1px solid #4285f4;border-radius:8px;color:#4285f4;cursor:pointer;font-family:Montserrat,sans-serif;font-size:13px;font-weight:600">📅 Agregar al calendario</button>
     <div style="display:flex;gap:8px">
       <button class="btn-cancel" onclick="closePendModal()">Cancelar</button>
       <button class="btn-save" onclick="savePendModal()">Guardar</button>
@@ -1994,7 +1994,7 @@ function togglePendResp(user){
     if (btn) btn.classList.toggle('active', vals.includes(u));
   });
 }
-function savePendModal(){
+function _readPendModal(){
   const cat = document.getElementById('pend-cat').value || 'escritos';
   const obj = {
     tarea:   document.getElementById('pend-tarea').value.trim(),
@@ -2004,11 +2004,79 @@ function savePendModal(){
     resp:    document.getElementById('pend-resp').value,
     estado:  'pendiente'
   };
-  if (!state.pendientes[cat]) state.pendientes[cat] = [];
-  state.pendientes[cat].push(obj);
-  // Sync escrito -> causa si corresponde
-  if (cat === 'escritos' && obj.autos) { try { syncEscritoToCausa(obj.autos, obj.tarea || ''); } catch(e){} }
+  return { cat: cat, obj: obj };
+}
+function savePendModal(){
+  const p = _readPendModal();
+  if (!state.pendientes[p.cat]) state.pendientes[p.cat] = [];
+  state.pendientes[p.cat].push(p.obj);
+  if (p.cat === 'escritos' && p.obj.autos) { try { syncEscritoToCausa(p.obj.autos, p.obj.tarea || ''); } catch(e){} }
   closePendModal(); saveLocal(); renderPendientes();
+}
+function savePendAndAgendar(){
+  // 1. Guardar el pendiente primero (para poder linkear el evento)
+  const p = _readPendModal();
+  if (!state.pendientes[p.cat]) state.pendientes[p.cat] = [];
+  state.pendientes[p.cat].push(p.obj);
+  const newIdx = state.pendientes[p.cat].length - 1;
+  if (p.cat === 'escritos' && p.obj.autos) { try { syncEscritoToCausa(p.obj.autos, p.obj.tarea || ''); } catch(e){} }
+  closePendModal(); saveLocal(); renderPendientes();
+  // 2. Abrir modal de evento pre-poblado y con linkId listo para asociar al guardar
+  window._pendEvLink = { cat: p.cat, idx: newIdx };
+  openEvModal();
+  setTimeout(function(){
+    const et = document.getElementById('ev-tipo'); if (et) et.value = CAT_LABEL[p.cat] || p.cat;
+    const ef = document.getElementById('ev-fecha'); if (ef) ef.value = p.obj.fecha || '';
+    const ec = document.getElementById('ev-causa'); if (ec) ec.value = p.obj.autos || '';
+    const eo = document.getElementById('ev-obs'); if (eo) eo.value = p.obj.tarea || '';
+    const er = document.getElementById('ev-resp'); if (er) er.value = p.obj.resp || '';
+    const vals = (p.obj.resp||'').split(',').filter(Boolean);
+    ['mati','juan','bruno','seba'].forEach(function(u){
+      const btn = document.getElementById('resp-'+u);
+      if (btn) btn.classList.toggle('active', vals.includes(u));
+    });
+  }, 60);
+}
+// ===== DROPDOWN DE RESPONSABLE EN FILA =====
+let _openPendRespDd = null;
+function buildPendRespCell(cat, i, respSet, USERS_R) {
+  const key = cat + '_' + i;
+  const sel = USERS_R.filter(function(u){ return respSet.has(u); });
+  // Trigger compacto: muestra las pills de los seleccionados + ▾. Si 0, muestra "Asignar".
+  let triggerInner;
+  if (sel.length === 0) {
+    triggerInner = '<span style="font-size:11px;color:#758B8F;font-weight:600">+ Asignar</span>';
+  } else {
+    triggerInner = sel.map(function(u){
+      const lbl = u.charAt(0).toUpperCase() + u.slice(1);
+      return '<span style="padding:1px 6px;border:1px solid #d4c9be;border-radius:9px;font-size:10px;background:#fff;color:#2F4F56;font-weight:600;line-height:1.3;white-space:nowrap">👨\u200d💼 '+lbl+'</span>';
+    }).join(' ');
+  }
+  const trigger = '<button type="button" data-pend-resp-trigger="'+key+'" onclick="event.stopPropagation();togglePendRespDd(\''+cat+'\','+i+')" style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #d4c9be;border-radius:9px;background:#fff;cursor:pointer;font-family:Montserrat,sans-serif;max-width:100%;flex-wrap:wrap">' + triggerInner + ' <span style="font-size:9px;color:#758B8F">▾</span></button>';
+  // Panel desplegable (oculto por defecto)
+  const ddItems = USERS_R.map(function(u){
+    const on = respSet.has(u);
+    const lbl = u.charAt(0).toUpperCase() + u.slice(1);
+    const bg = on ? '#2F4F56' : '#fff';
+    const col = on ? '#fff' : '#2F4F56';
+    const bd = on ? '#2F4F56' : '#d4c9be';
+    return '<button type="button" onclick="event.stopPropagation();togglePendRespRow(\''+cat+'\','+i+',\''+u+'\')" style="display:block;width:100%;text-align:left;padding:6px 10px;border:1px solid '+bd+';border-radius:6px;font-size:11px;font-weight:600;background:'+bg+';color:'+col+';cursor:pointer;font-family:Montserrat,sans-serif;margin-bottom:4px;line-height:1.3">'+(on?'✓ ':'')+'👨\u200d💼 '+lbl+'</button>';
+  }).join('');
+  const dd = '<div class="pend-resp-dd" id="pend-resp-dd-'+key+'" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;padding:8px;background:#fff;border:1px solid #d4c9be;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:50;min-width:140px">' + ddItems + '</div>';
+  return '<div style="position:relative;display:inline-block;max-width:100%">' + trigger + dd + '</div>';
+}
+function togglePendRespDd(cat, idx){
+  const key = cat + '_' + idx;
+  const dd = document.getElementById('pend-resp-dd-' + key);
+  if (!dd) return;
+  // Cerrar cualquier otro abierto
+  if (_openPendRespDd && _openPendRespDd !== key) {
+    const prev = document.getElementById('pend-resp-dd-' + _openPendRespDd);
+    if (prev) prev.style.display = 'none';
+  }
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+  _openPendRespDd = isOpen ? null : key;
 }
 // Toggle de responsable desde una fila (editable inline, multi-select o ninguno)
 function togglePendRespRow(cat, idx, user){
@@ -2017,8 +2085,26 @@ function togglePendRespRow(cat, idx, user){
   var p = vals.indexOf(user);
   if (p >= 0) vals.splice(p, 1); else vals.push(user);
   row.resp = vals.join(',');
-  saveLocal(); renderPendientes();
+  saveLocal();
+  const wasOpen = _openPendRespDd;
+  renderPendientes();
+  // Reabrir el dropdown que estaba abierto (para permitir seleccionar varios sin cerrar)
+  if (wasOpen) {
+    const dd = document.getElementById('pend-resp-dd-' + wasOpen);
+    if (dd) { dd.style.display = 'block'; _openPendRespDd = wasOpen; }
+  }
 }
+// Cerrar dropdown al clickear fuera
+document.addEventListener('click', function(e){
+  if (!_openPendRespDd) return;
+  const key = _openPendRespDd;
+  const dd = document.getElementById('pend-resp-dd-' + key);
+  const trigger = document.querySelector('[data-pend-resp-trigger="'+key+'"]');
+  if (dd && !dd.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
+    dd.style.display = 'none';
+    _openPendRespDd = null;
+  }
+});
 // Construye un detalle legible a partir de los campos viejos (para items migrados de las sub-secciones).
 function buildLegacyDetalle(cat, r) {
   const parts = [];
@@ -2109,14 +2195,20 @@ function openEvModalFromPendU(cat, idx) {
       return;
     }
   }
-  // Crear nuevo evento vinculado
+  // Crear nuevo evento vinculado: Tipo = categoría, Obs = tarea, Causa = autos, Resp = resp del pendiente
   window._pendEvLink = { cat: cat, idx: idx };
   openEvModal();
   setTimeout(function() {
     const ef = document.getElementById('ev-fecha'); if (ef) ef.value = row.fecha;
-    const et = document.getElementById('ev-tipo'); if (et) et.value = cat === 'telegrama' ? 'Otro' : 'Escrito';
+    const et = document.getElementById('ev-tipo'); if (et) et.value = (typeof CAT_LABEL!=='undefined' && CAT_LABEL[cat]) ? CAT_LABEL[cat] : cat;
     const ec = document.getElementById('ev-causa'); if (ec) ec.value = row.autos || '';
     const eo = document.getElementById('ev-obs'); if (eo) eo.value = row.tarea || row.detalle || '';
+    const er = document.getElementById('ev-resp'); if (er) er.value = row.resp || '';
+    const vals = (row.resp||'').split(',').filter(Boolean);
+    ['mati','juan','bruno','seba'].forEach(function(u){
+      const btn = document.getElementById('resp-'+u);
+      if (btn) btn.classList.toggle('active', vals.includes(u));
+    });
   }, 50);
 }
 function spSel(val,field,idx,tab,opts){
@@ -2195,16 +2287,7 @@ function renderPendientes(){
     const catSel = '<select onchange="changePendCat('+i+',\''+cat+'\',this.value)" style="padding:5px 8px;border:1px solid '+CAT_COLOR[cat]+';border-radius:14px;font-size:11px;font-weight:600;background:'+CAT_COLOR[cat]+'22;color:'+CAT_COLOR[cat]+';cursor:pointer;font-family:Montserrat,sans-serif;max-width:100%">' +
       PEND_CATS.map(function(c) { return '<option value="'+c+'"'+(c===cat?' selected':'')+'>'+CAT_LABEL[c]+'</option>'; }).join('') + '</select>';
     const calBtn = fecha ? '<button onclick="openEvModalFromPendU(\''+cat+'\','+i+')" title="Crear evento" style="padding:3px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4;margin-left:4px">📅</button>' : '';
-    const respCell = '<div style="display:flex;gap:3px;flex-wrap:wrap">' +
-      USERS_R.map(function(u){
-        const on = respSet.has(u);
-        const bg = on ? '#2F4F56' : '#fff';
-        const col = on ? '#fff' : '#758B8F';
-        const bd = on ? '#2F4F56' : '#d4c9be';
-        const lbl = u.charAt(0).toUpperCase() + u.slice(1);
-        return '<button type="button" title="'+lbl+'" onclick="togglePendRespRow(\''+cat+'\','+i+',\''+u+'\')" style="padding:2px 6px;border:1px solid '+bd+';border-radius:10px;font-size:10px;font-weight:600;background:'+bg+';color:'+col+';cursor:pointer;font-family:Montserrat,sans-serif;line-height:1.3">'+USER_EMO[u]+' '+lbl+'</button>';
-      }).join('') +
-    '</div>';
+    const respCell = buildPendRespCell(cat, i, respSet, USERS_R);
     return '<tr>' +
       '<td>'+catSel+'</td>' +
       '<td>'+pInput(tarea, 'tarea', i, cat, 'Tarea...')+'</td>' +
