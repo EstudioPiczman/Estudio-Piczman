@@ -754,9 +754,10 @@ tr.data-row.expanded td{background:#f5f0eb}
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsdbRI2NNiYlw1LIRAJqB2jBxK4XmqNuNK24OpHeqRbTENXr0gaRTw5CqUA_N8PY4Xw/exec';
-const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario', SHEET_CAUTELARES = 'Status_Cautelares', SHEET_HISTORIAL = 'Historial', SHEET_PENDIENTES = 'Pendientes', SHEET_ARCHIVO = 'Archivo';
+const SHEET_LABORAL = 'Status_Laboral', SHEET_COMERCIAL = 'Status_CyC', SHEET_CAL = 'Calendario', SHEET_CAUTELARES = 'Status_Cautelares', SHEET_HISTORIAL = 'Historial', SHEET_PENDIENTES = 'Pendientes', SHEET_ARCHIVO = 'Archivo', SHEET_NOTAS = 'Notas';
 const PEND_COLS = ['seccion','data'];
 const ARCH_COLS = ['seccion','data','req','dem','user','fecha','estado'];
+const NOTAS_COLS = ['user','data'];
 const USERS = { mati: 'trasmonte2024', juan: 'piczman2024', bruno: 'estudio2024', sebi: 'lanave2' };
 const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const ETAPA_CLASS = {
@@ -849,6 +850,28 @@ async function loadAll() {
         archSheetOk = true;
       }
     } catch(e) { loadArchivoLocal(); }
+    // Notas: también en Sheet (por-user) para sincronizar entre dispositivos/navegadores.
+    try {
+      const not = await fetchSheet(SHEET_NOTAS);
+      const parsedNot = parseNotasSheet(not);
+      const totalNot = Object.keys(parsedNot).reduce(function(s,k){return s+(parsedNot[k]||[]).length;},0);
+      state.notas = parsedNot;
+      // Migración incremental: por cada user conocido, si en el Sheet no hay notas pero sí en su localStorage (de este navegador), subirlas.
+      let needsUpload = false;
+      Object.keys(USERS).forEach(function(u) {
+        if (!state.notas[u] || state.notas[u].length === 0) {
+          try {
+            const n = localStorage.getItem('tm_notas_' + u);
+            const local = n ? JSON.parse(n) : [];
+            if (Array.isArray(local) && local.length > 0) {
+              state.notas[u] = local;
+              needsUpload = true;
+            }
+          } catch(e) {}
+        }
+      });
+      if (needsUpload) saveNotasSheet();
+    } catch(e) { /* si falla, queda el fallback loadLocal */ }
     loadLocal(); buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderNotas(); renderArchivo();
     setSync('saved', 'Sincronizado');
@@ -859,11 +882,13 @@ async function loadAll() {
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderPendientes(); renderNotas();
   }
 }
-// Solo las notas son por usuario (localStorage). Pendientes/Archivo son compartidos (Sheets).
+// Notas ahora viven en Sheets (por-user). loadLocal sólo rellena si el Sheet no trajo datos para este user.
 function loadLocal() {
+  // Si el Sheet ya pobló state.notas[currentUser], respetarlo (no pisar con localStorage).
+  if (Array.isArray(state.notas[currentUser]) && state.notas[currentUser].length > 0) return;
   try {
     const n = localStorage.getItem('tm_notas_' + currentUser);
-    state.notas[currentUser] = n ? JSON.parse(n) : [];
+    state.notas[currentUser] = n ? JSON.parse(n) : (state.notas[currentUser] || []);
   } catch(e) {}
 }
 function loadPendientesLocal() {
@@ -942,8 +967,38 @@ async function saveArchivoSheet() {
     setTimeout(function() { setSync('', 'Listo'); }, 2000);
   } catch(e) { setSync('error', 'Error al guardar archivo'); }
 }
+function parseNotasSheet(rows) {
+  const notas = {};
+  if (!rows || !rows.length) return notas;
+  const data = rows[0][0] === 'user' ? rows.slice(1) : rows;
+  data.forEach(function(r) {
+    if (!r || !r[0]) return;
+    const u = String(r[0]);
+    let obj = {};
+    try { obj = JSON.parse(r[1] || '{}'); } catch(e) { obj = {}; }
+    if (!notas[u]) notas[u] = [];
+    notas[u].push(obj);
+  });
+  return notas;
+}
+async function saveNotasSheet() {
+  setSync('saving', 'Guardando...');
+  const rows = [NOTAS_COLS.slice()];
+  Object.keys(state.notas || {}).forEach(function(u) {
+    (state.notas[u] || []).forEach(function(n) {
+      rows.push([u, JSON.stringify(n || {})]);
+    });
+  });
+  try {
+    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_NOTAS, action: 'write', rows }) });
+    setSync('saved', 'Guardado');
+    setTimeout(function() { setSync('', 'Listo'); }, 2000);
+  } catch(e) { setSync('error', 'Error al guardar notas'); }
+}
 function saveNotas() {
+  // cache local por si el fetch al Sheet falla
   try { localStorage.setItem('tm_notas_' + currentUser, JSON.stringify(state.notas[currentUser] || [])); } catch(e) {}
+  saveNotasSheet();
 }
 async function fetchSheet(sheet) {
   const r = await fetch(SCRIPT_URL + '?sheet=' + encodeURIComponent(sheet));
@@ -1090,8 +1145,15 @@ async function refreshShared() {
       const parsedArch = parseArchivoSheet(arch);
       if (parsedArch.length > 0) state.archivo = parsedArch;
     } catch(e) {}
+    // Notas: si el Sheet trae datos, refrescar state.notas (para ver cambios hechos desde otro dispositivo).
+    try {
+      const not = await fetchSheet(SHEET_NOTAS);
+      const parsedNot = parseNotasSheet(not);
+      const totalNot = Object.keys(parsedNot).reduce(function(s,k){return s+(parsedNot[k]||[]).length;},0);
+      if (totalNot > 0) state.notas = parsedNot;
+    } catch(e) {}
     buildCalMeses(); buildCausasList();
-    renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderArchivo();
+    renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderArchivo(); renderNotas();
   } catch(e) {}
   finally { _refreshInFlight = false; }
 }
