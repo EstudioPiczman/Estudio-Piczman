@@ -981,6 +981,8 @@ function parseNotasSheet(rows) {
   });
   return notas;
 }
+let _notasSaveTimer = null;
+let _notasSaveRetry = 0;
 async function saveNotasSheet() {
   setSync('saving', 'Guardando...');
   const rows = [NOTAS_COLS.slice()];
@@ -991,14 +993,33 @@ async function saveNotasSheet() {
   });
   try {
     await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_NOTAS, action: 'write', rows }) });
+    _notasSaveRetry = 0;
     setSync('saved', 'Guardado');
     setTimeout(function() { setSync('', 'Listo'); }, 2000);
-  } catch(e) { setSync('error', 'Error al guardar notas'); }
+  } catch(e) {
+    // Reintento exponencial hasta 2 veces antes de avisar error (la data ya está en localStorage).
+    if (_notasSaveRetry < 2) {
+      _notasSaveRetry++;
+      setSync('saving', 'Reintentando...');
+      setTimeout(saveNotasSheet, 1500);
+    } else {
+      _notasSaveRetry = 0;
+      setSync('error', 'Sin conexión — queda guardado en este navegador');
+      // Limpiar el estado de error al cabo de 5s
+      setTimeout(function() { setSync('', 'Listo'); }, 5000);
+    }
+  }
 }
 function saveNotas() {
-  // cache local por si el fetch al Sheet falla
+  // Cache local INMEDIATO (siempre se persiste, nada se pierde aunque falle la red).
   try { localStorage.setItem('tm_notas_' + currentUser, JSON.stringify(state.notas[currentUser] || [])); } catch(e) {}
-  saveNotasSheet();
+  // Debounce: si el user está editando varios campos seguidos, consolidar en un solo upload.
+  if (_notasSaveTimer) clearTimeout(_notasSaveTimer);
+  _notasSaveTimer = setTimeout(function() {
+    _notasSaveTimer = null;
+    _notasSaveRetry = 0;
+    saveNotasSheet();
+  }, 600);
 }
 async function fetchSheet(sheet) {
   const r = await fetch(SCRIPT_URL + '?sheet=' + encodeURIComponent(sheet));
