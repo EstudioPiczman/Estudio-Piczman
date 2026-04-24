@@ -814,49 +814,48 @@ function setSync(s, msg) {
 async function loadAll() {
   setSync('saving', 'Cargando...');
   try {
-    const [lab, cyc, caut, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAUTELARES), fetchSheet(SHEET_CAL)]);
+    // Paralelizar TODOS los fetches (antes era 4 paralelos + 3 secuenciales). Las ramas try/catch
+    // individuales siguen separadas, pero ninguna espera a la anterior.
+    const [lab, cyc, caut, cal, pendR, archR, notR] = await Promise.all([
+      fetchSheet(SHEET_LABORAL),
+      fetchSheet(SHEET_COMERCIAL),
+      fetchSheet(SHEET_CAUTELARES),
+      fetchSheet(SHEET_CAL),
+      fetchSheet(SHEET_PENDIENTES).catch(function(){ return null; }),
+      fetchSheet(SHEET_ARCHIVO).catch(function(){ return null; }),
+      fetchSheet(SHEET_NOTAS).catch(function(){ return null; })
+    ]);
     state.laboral = parseSheet(lab, CAUSAS_COLS);
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
     state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
-    // Pendientes y Archivo viven en Sheets para que sean universales entre users.
-    // Si las pestañas aún no existen en el Sheet O están vacías, cae al cache local
-    // y sube lo del localStorage al Sheet (migración inicial one-time).
-    let pendSheetOk = false, archSheetOk = false;
-    try {
-      const pend = await fetchSheet(SHEET_PENDIENTES);
-      const parsedPend = parsePendientesSheet(pend);
+    // --- Pendientes ---
+    if (pendR !== null) {
+      const parsedPend = parsePendientesSheet(pendR);
       const totalPend = Object.keys(parsedPend).reduce(function(s,k){return s+(parsedPend[k]||[]).length;},0);
       if (totalPend > 0) {
         state.pendientes = parsedPend;
-        pendSheetOk = true;
       } else {
-        // Sheet existe pero está vacío. Usar localStorage y subir al Sheet.
         loadPendientesLocal();
         const totalLocal = Object.keys(state.pendientes).reduce(function(s,k){return s+(state.pendientes[k]||[]).length;},0);
         if (totalLocal > 0) savePendientesSheet();
-        pendSheetOk = true;
       }
-    } catch(e) { loadPendientesLocal(); }
-    try {
-      const arch = await fetchSheet(SHEET_ARCHIVO);
-      const parsedArch = parseArchivoSheet(arch);
+    } else { loadPendientesLocal(); }
+    // --- Archivo ---
+    if (archR !== null) {
+      const parsedArch = parseArchivoSheet(archR);
       if (parsedArch.length > 0) {
         state.archivo = parsedArch;
-        archSheetOk = true;
       } else {
         loadArchivoLocal();
         if ((state.archivo || []).length > 0) saveArchivoSheet();
-        archSheetOk = true;
       }
-    } catch(e) { loadArchivoLocal(); }
-    // Notas: también en Sheet (por-user) para sincronizar entre dispositivos/navegadores.
-    try {
-      const not = await fetchSheet(SHEET_NOTAS);
-      const parsedNot = parseNotasSheet(not);
-      const totalNot = Object.keys(parsedNot).reduce(function(s,k){return s+(parsedNot[k]||[]).length;},0);
+    } else { loadArchivoLocal(); }
+    // --- Notas ---
+    if (notR !== null) {
+      const parsedNot = parseNotasSheet(notR);
       state.notas = parsedNot;
-      // Migración incremental: por cada user conocido, si en el Sheet no hay notas pero sí en su localStorage (de este navegador), subirlas.
+      // Migración incremental por user: si en el Sheet no hay notas pero sí en su localStorage, subirlas.
       let needsUpload = false;
       Object.keys(USERS).forEach(function(u) {
         if (!state.notas[u] || state.notas[u].length === 0) {
@@ -870,8 +869,9 @@ async function loadAll() {
           } catch(e) {}
         }
       });
-      if (needsUpload) saveNotasSheet();
-    } catch(e) { /* si falla, queda el fallback loadLocal */ }
+      // Diferir la subida para no competir con otros writes en curso (pendientes/archivo migration).
+      if (needsUpload) setTimeout(saveNotasSheet, 1200);
+    }
     loadLocal(); buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderNotas(); renderArchivo();
     setSync('saved', 'Sincronizado');
@@ -1149,30 +1149,35 @@ async function refreshShared() {
   if (_refreshInFlight || !currentUser) return;
   _refreshInFlight = true;
   try {
-    const [lab, cyc, caut, cal] = await Promise.all([fetchSheet(SHEET_LABORAL), fetchSheet(SHEET_COMERCIAL), fetchSheet(SHEET_CAUTELARES), fetchSheet(SHEET_CAL)]);
+    // 7 fetches en paralelo
+    const [lab, cyc, caut, cal, pendR, archR, notR] = await Promise.all([
+      fetchSheet(SHEET_LABORAL),
+      fetchSheet(SHEET_COMERCIAL),
+      fetchSheet(SHEET_CAUTELARES),
+      fetchSheet(SHEET_CAL),
+      fetchSheet(SHEET_PENDIENTES).catch(function(){ return null; }),
+      fetchSheet(SHEET_ARCHIVO).catch(function(){ return null; }),
+      fetchSheet(SHEET_NOTAS).catch(function(){ return null; })
+    ]);
     state.laboral = parseSheet(lab, CAUSAS_COLS);
     state.comercial = parseSheet(cyc, CAUSAS_COLS);
     state.cautelares = parseSheet(caut, CAUSAS_COLS);
     state.eventos = parseSheet(cal, EV_COLS);
     // Ojo: si el Sheet devuelve vacío, NO pisar el state en memoria (puede haber una migración en curso).
-    try {
-      const pend = await fetchSheet(SHEET_PENDIENTES);
-      const parsedPend = parsePendientesSheet(pend);
+    if (pendR !== null) {
+      const parsedPend = parsePendientesSheet(pendR);
       const totalPend = Object.keys(parsedPend).reduce(function(s,k){return s+(parsedPend[k]||[]).length;},0);
       if (totalPend > 0) state.pendientes = parsedPend;
-    } catch(e) {}
-    try {
-      const arch = await fetchSheet(SHEET_ARCHIVO);
-      const parsedArch = parseArchivoSheet(arch);
+    }
+    if (archR !== null) {
+      const parsedArch = parseArchivoSheet(archR);
       if (parsedArch.length > 0) state.archivo = parsedArch;
-    } catch(e) {}
-    // Notas: si el Sheet trae datos, refrescar state.notas (para ver cambios hechos desde otro dispositivo).
-    try {
-      const not = await fetchSheet(SHEET_NOTAS);
-      const parsedNot = parseNotasSheet(not);
+    }
+    if (notR !== null) {
+      const parsedNot = parseNotasSheet(notR);
       const totalNot = Object.keys(parsedNot).reduce(function(s,k){return s+(parsedNot[k]||[]).length;},0);
       if (totalNot > 0) state.notas = parsedNot;
-    } catch(e) {}
+    }
     buildCalMeses(); buildCausasList();
     renderMetrics(); renderTable(); renderCal(); renderTotales(); renderCobros(); renderPendientes(); renderArchivo(); renderNotas();
   } catch(e) {}
