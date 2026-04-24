@@ -435,12 +435,12 @@ tr.data-row.expanded td{background:#f5f0eb}
     <span class="section-title">Pendientes</span>
     <div style="display:flex;gap:8px">
       <button class="archivo-btn" onclick="showSec('archivo',null)">📁 Ver archivo</button>
-      <button class="btn-primary" onclick="addPendRow()">+ Agregar</button>
+      <button class="btn-primary" onclick="openPendModal()">+ Agregar</button>
     </div>
   </div>
   <div id="pend-filter-pills" style="display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;align-items:center"></div>
   <div class="pend-table-wrap"><table>
-    <thead><tr><th style="width:155px">Categoría</th><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th style="width:175px">Fecha / Evento</th><th style="width:135px">Estado</th><th style="width:40px"></th></tr></thead>
+    <thead><tr><th style="width:155px">Categoría</th><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th style="width:170px">Fecha / Evento</th><th style="width:185px">Responsable</th><th style="width:135px">Estado</th><th style="width:40px"></th></tr></thead>
     <tbody id="tb-pendientes"></tbody>
   </table></div>
 </div>
@@ -709,6 +709,44 @@ tr.data-row.expanded td{background:#f5f0eb}
     <div style="display:flex;gap:8px">
       <button class="btn-cancel" onclick="closeEvModal()">Cancelar</button>
       <button class="btn-save" onclick="saveEv()">Guardar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PENDIENTE -->
+<div class="modal-bg" id="modal-pend-bg" onclick="if(event.target===this)closePendModal()">
+<div class="modal modal-ev">
+  <div class="modal-header">
+    <h2 id="modal-pend-title">Nuevo pendiente</h2>
+    <button class="modal-close" onclick="closePendModal()">×</button>
+  </div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Categoría</label>
+      <select id="pend-cat" style="padding:8px 10px;border:1px solid #d4c9be;border-radius:8px;font-size:13px;font-family:'Montserrat',sans-serif;background:#fff;color:#2F4F56;width:100%"></select>
+    </div>
+    <div class="form-group full"><label>Tarea</label><input id="pend-tarea" type="text" placeholder="Tarea..."></div>
+    <div class="form-group full"><label>Autos / carátula</label>
+      <input id="pend-autos" type="text" list="causas-list" placeholder="Autos / carátula...">
+    </div>
+    <div class="form-group full"><label>Detalle</label><textarea id="pend-detalle" style="min-height:52px" placeholder="Detalle..."></textarea></div>
+    <div class="form-group"><label>Fecha / Evento</label><input type="date" id="pend-fecha"></div>
+  </div>
+  <div style="margin-bottom:1rem">
+    <label style="font-size:11px;color:#758B8F;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:8px">Responsable(s)</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="pend-resp-btns">
+      <button type="button" class="resp-btn" onclick="togglePendResp('mati')" id="presp-mati">👨‍💼 Mati</button>
+      <button type="button" class="resp-btn" onclick="togglePendResp('juan')" id="presp-juan">👨‍💼 Juan</button>
+      <button type="button" class="resp-btn" onclick="togglePendResp('bruno')" id="presp-bruno">👨‍💼 Bruno</button>
+      <button type="button" class="resp-btn" onclick="togglePendResp('seba')" id="presp-seba">👨‍💼 Seba</button>
+    </div>
+    <input type="hidden" id="pend-resp">
+  </div>
+  <div class="modal-footer">
+    <div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-cancel" onclick="closePendModal()">Cancelar</button>
+      <button class="btn-save" onclick="savePendModal()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1909,13 +1947,76 @@ function showSubTab(id,el){
   el.classList.add('active'); document.getElementById('spanel-'+id).classList.add('active');
 }
 function addPendRow(){
-  // Si hay sólo una categoría activa en el filtro, la nueva entra ahí; si no, va a "escritos" por default.
+  // Mantenido por compatibilidad. Ahora el flujo principal usa openPendModal().
   let targetCat = 'escritos';
   if (pendFilterCats && pendFilterCats.size === 1) {
     targetCat = Array.from(pendFilterCats)[0];
   }
   if (!state.pendientes[targetCat]) state.pendientes[targetCat] = [];
-  state.pendientes[targetCat].push({ tarea:'', autos:'', detalle:'', fecha:'', estado:'pendiente' });
+  state.pendientes[targetCat].push({ tarea:'', autos:'', detalle:'', fecha:'', resp:'', estado:'pendiente' });
+  saveLocal(); renderPendientes();
+}
+// ===== MODAL PENDIENTE =====
+function openPendModal(){
+  // Default de categoría: si hay una sola pill activa la uso, si no "escritos"
+  let defCat = 'escritos';
+  if (pendFilterCats && pendFilterCats.size === 1) defCat = Array.from(pendFilterCats)[0];
+  const sel = document.getElementById('pend-cat');
+  if (sel) {
+    sel.innerHTML = PEND_CATS.map(function(c){
+      return '<option value="'+c+'"'+(c===defCat?' selected':'')+'>'+CAT_LABEL[c]+'</option>';
+    }).join('');
+  }
+  // Reset campos
+  document.getElementById('pend-tarea').value = '';
+  document.getElementById('pend-autos').value = '';
+  document.getElementById('pend-detalle').value = '';
+  document.getElementById('pend-fecha').value = '';
+  document.getElementById('pend-resp').value = '';
+  ['mati','juan','bruno','seba'].forEach(function(u){
+    var btn = document.getElementById('presp-'+u);
+    if (btn) btn.classList.remove('active');
+  });
+  document.getElementById('modal-pend-bg').classList.add('open');
+  setTimeout(function(){ var t = document.getElementById('pend-tarea'); if (t) t.focus(); }, 60);
+}
+function closePendModal(){
+  document.getElementById('modal-pend-bg').classList.remove('open');
+}
+function togglePendResp(user){
+  var inp = document.getElementById('pend-resp');
+  var vals = inp.value ? inp.value.split(',').filter(Boolean) : [];
+  var idx = vals.indexOf(user);
+  if (idx >= 0) vals.splice(idx, 1); else vals.push(user);
+  inp.value = vals.join(',');
+  ['mati','juan','bruno','seba'].forEach(function(u){
+    var btn = document.getElementById('presp-'+u);
+    if (btn) btn.classList.toggle('active', vals.includes(u));
+  });
+}
+function savePendModal(){
+  const cat = document.getElementById('pend-cat').value || 'escritos';
+  const obj = {
+    tarea:   document.getElementById('pend-tarea').value.trim(),
+    autos:   document.getElementById('pend-autos').value.trim(),
+    detalle: document.getElementById('pend-detalle').value.trim(),
+    fecha:   document.getElementById('pend-fecha').value,
+    resp:    document.getElementById('pend-resp').value,
+    estado:  'pendiente'
+  };
+  if (!state.pendientes[cat]) state.pendientes[cat] = [];
+  state.pendientes[cat].push(obj);
+  // Sync escrito -> causa si corresponde
+  if (cat === 'escritos' && obj.autos) { try { syncEscritoToCausa(obj.autos, obj.tarea || ''); } catch(e){} }
+  closePendModal(); saveLocal(); renderPendientes();
+}
+// Toggle de responsable desde una fila (editable inline, multi-select o ninguno)
+function togglePendRespRow(cat, idx, user){
+  const row = state.pendientes[cat] && state.pendientes[cat][idx]; if (!row) return;
+  var vals = row.resp ? String(row.resp).split(',').filter(Boolean) : [];
+  var p = vals.indexOf(user);
+  if (p >= 0) vals.splice(p, 1); else vals.push(user);
+  row.resp = vals.join(',');
   saveLocal(); renderPendientes();
 }
 // Construye un detalle legible a partir de los campos viejos (para items migrados de las sub-secciones).
@@ -2078,7 +2179,9 @@ function renderPendientes(){
     if (!fa && fb) return 1;
     return 0;
   });
-  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">Sin registros</td></tr>'; return; }
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">Sin registros</td></tr>'; return; }
+  const USERS_R = ['mati','juan','bruno','seba'];
+  const USER_EMO = {mati:'👨‍💼',juan:'👨‍💼',bruno:'👨‍💼',seba:'👨‍💼'};
   tb.innerHTML = filtered.map(function(x) {
     const cat = x._cat, i = x._i, r = x.r;
     // Campos unificados: si existen como propios los uso, si no derivo de los campos viejos
@@ -2087,15 +2190,28 @@ function renderPendientes(){
     const detalle = r.detalle != null && r.detalle !== '' ? r.detalle : buildLegacyDetalle(cat, r);
     const fecha   = r.fecha || '';
     const estado  = r.estado || (cat === 'negociacion' && r.seclo === 'finalizado' ? 'completado' : 'pendiente');
+    const respStr = (r.resp || '').toString();
+    const respSet = new Set(respStr.split(',').map(function(s){return s.trim();}).filter(Boolean));
     const catSel = '<select onchange="changePendCat('+i+',\''+cat+'\',this.value)" style="padding:5px 8px;border:1px solid '+CAT_COLOR[cat]+';border-radius:14px;font-size:11px;font-weight:600;background:'+CAT_COLOR[cat]+'22;color:'+CAT_COLOR[cat]+';cursor:pointer;font-family:Montserrat,sans-serif;max-width:100%">' +
       PEND_CATS.map(function(c) { return '<option value="'+c+'"'+(c===cat?' selected':'')+'>'+CAT_LABEL[c]+'</option>'; }).join('') + '</select>';
     const calBtn = fecha ? '<button onclick="openEvModalFromPendU(\''+cat+'\','+i+')" title="Crear evento" style="padding:3px 7px;border:1px solid #c5d9f8;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#4285f4;margin-left:4px">📅</button>' : '';
+    const respCell = '<div style="display:flex;gap:3px;flex-wrap:wrap">' +
+      USERS_R.map(function(u){
+        const on = respSet.has(u);
+        const bg = on ? '#2F4F56' : '#fff';
+        const col = on ? '#fff' : '#758B8F';
+        const bd = on ? '#2F4F56' : '#d4c9be';
+        const lbl = u.charAt(0).toUpperCase() + u.slice(1);
+        return '<button type="button" title="'+lbl+'" onclick="togglePendRespRow(\''+cat+'\','+i+',\''+u+'\')" style="padding:2px 6px;border:1px solid '+bd+';border-radius:10px;font-size:10px;font-weight:600;background:'+bg+';color:'+col+';cursor:pointer;font-family:Montserrat,sans-serif;line-height:1.3">'+USER_EMO[u]+' '+lbl+'</button>';
+      }).join('') +
+    '</div>';
     return '<tr>' +
       '<td>'+catSel+'</td>' +
       '<td>'+pInput(tarea, 'tarea', i, cat, 'Tarea...')+'</td>' +
       '<td>'+pInput(autos, 'autos', i, cat, 'Autos / carátula...')+'</td>' +
       '<td><input value="'+(detalle||'').replace(/"/g,'&quot;')+'" placeholder="Detalle..." onchange="inputPend('+i+',\''+cat+'\',\'detalle\',this.value)" style="width:100%;padding:6px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:13px"></td>' +
       '<td style="white-space:nowrap"><input type="date" value="'+fecha+'" onchange="state.pendientes[\''+cat+'\']['+i+'].fecha=this.value;saveLocal();renderPendientes()" style="padding:5px 7px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;width:130px">'+calBtn+'</td>' +
+      '<td>'+respCell+'</td>' +
       '<td><select onchange="updatePendEstado(\''+cat+'\','+i+',this.value)" style="padding:5px 8px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;cursor:pointer;font-weight:600;background:'+(estado==='completado'?'#d1fae5':'#fef3c7')+';color:'+(estado==='completado'?'#065f46':'#92400e')+'"><option value="pendiente"'+(estado!=='completado'?' selected':'')+'>Pendiente</option><option value="completado"'+(estado==='completado'?' selected':'')+'>Completado</option></select></td>' +
       '<td><button class="btn-rm" onclick="rmPend('+i+',\''+cat+'\')">×</button></td>' +
       '</tr>';
