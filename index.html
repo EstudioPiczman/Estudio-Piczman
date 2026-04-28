@@ -119,9 +119,15 @@ tr.data-row.expanded td{background:#f5f0eb}
 .day-separator-count{font-size:11px;color:#758B8F;background:#e8e0d8;padding:2px 8px;border-radius:10px}
 .day-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .day-list{display:flex;flex-direction:column;gap:6px}
-.event-card{background:#fff;border:1px solid #d4c9be;border-radius:10px;padding:1rem 1rem 0.75rem 1.25rem;transition:box-shadow .15s}
+.event-card{background:#fff;border:1px solid #d4c9be;border-radius:10px;padding:1rem 1rem 0.75rem 1.25rem;transition:box-shadow .15s;overflow:hidden;min-width:0;word-wrap:break-word;overflow-wrap:anywhere;word-break:break-word}
 .event-card:hover{box-shadow:0 2px 12px rgba(47,79,86,0.10)}
 .event-card.list-view{border-radius:8px;padding:0.75rem 1rem;display:grid;grid-template-columns:80px 1fr auto;gap:12px;align-items:center}
+.event-card.ev-done{background:#f0ece6;opacity:.78;border-left-color:#9aa9ad !important;filter:grayscale(.4)}
+.event-card.ev-done .ev-causa,.event-card.ev-done .ev-tipo,.event-card.ev-done .ev-hora,.event-card.ev-done .ev-hora-big,.event-card.ev-done .ev-obs{color:#758B8F;text-decoration:line-through;text-decoration-thickness:1px}
+.event-card.ev-done .resp-pill{opacity:.65}
+.event-card .ev-obs,.event-card .ev-link a,.event-card a{overflow-wrap:anywhere;word-break:break-word;max-width:100%;display:block}
+.event-card.list-view .ev-obs,.event-card.list-view a{display:inline-block}
+.ev-done-badge{display:inline-block;padding:2px 8px;border-radius:10px;background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border:1px solid #6ee7b7}
 .event-card.ev-testimonial{border-left:4px solid #3b82f6}
 .event-card.ev-seclo{border-left:4px solid #8b5cf6}
 .event-card.ev-prueba{border-left:4px solid #e24b4a}
@@ -319,6 +325,7 @@ tr.data-row.expanded td{background:#f5f0eb}
         <option value="dia">Hoy</option>
         <option value="semana">Esta semana</option>
         <option value="mes">Este mes</option>
+        <option value="realizados">✔ Realizados</option>
       </select>
       <select id="cal-mes" onchange="renderCal()"><option value="">Filtrar por mes</option></select>
       <select id="cal-resp" onchange="renderCal()" style="padding:8px 11px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#2F4F56;font-size:13px;outline:none;font-family:'Montserrat',sans-serif">
@@ -453,7 +460,7 @@ tr.data-row.expanded td{background:#f5f0eb}
   </div>
   <div class="table-wrap">
     <table style="table-layout:auto">
-      <thead><tr><th>Sección</th><th>Requirente / Tarea</th><th>Demandado / Detalle</th><th>Completado por</th><th>Fecha</th><th>Acción</th></tr></thead>
+      <thead><tr><th>Categoría</th><th>Tarea</th><th>Autos / Carátula</th><th>Detalle</th><th>Completado por</th><th>Fecha</th><th>Acción</th></tr></thead>
       <tbody id="tb-archivo"></tbody>
     </table>
   </div>
@@ -594,9 +601,8 @@ tr.data-row.expanded td{background:#f5f0eb}
           <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Pericial</label>
           <button onclick="addPericial()" class="btn-add-cuota" style="margin-top:0">+ Agregar otra</button>
         </div>
-        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr auto;gap:6px;padding:0 2px;margin-bottom:4px">
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Tipo</span>
-          <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Observaciones</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. perito designado</span>
           <span style="font-size:10px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em">Fs. pericial presentada</span>
           <span></span>
@@ -766,7 +772,7 @@ const ETAPA_CLASS = {
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
 const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
-const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink'];
+const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt'];
 
 let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[],telegrama:[]}, notas:{}, archivo:[] };
 // Vista unificada de pendientes: cada item lleva implícita su categoría (según el array donde vive).
@@ -774,6 +780,7 @@ const PEND_CATS = ['escritos','telegrama','negociacion','demanda','sortear'];
 const CAT_LABEL = {escritos:'Escritos PJN', telegrama:'Telegrama/CD', negociacion:'En negociación', demanda:'Para hacer demanda', sortear:'Sortear y subir'};
 const CAT_COLOR = {escritos:'#4285f4', telegrama:'#8b5cf6', negociacion:'#059669', demanda:'#d97706', sortear:'#0891b2'};
 let pendFilterCats = new Set(PEND_CATS);
+let pendFilterResp = ''; // '', 'mati', 'juan', 'bruno', 'seba', 'sin' (sin asignar)
 let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'escritos', calView = 'cards';
 let cuotasCobroTemp = [], cobroIdx = null, cobroFuero = 'laboral';
 let cobrosTabActual = 'cobrar';
@@ -1905,6 +1912,10 @@ function renderCal(){
     if(q&&!(e.causa||'').toLowerCase().includes(q)&&!(e.tipo||'').toLowerCase().includes(q)&&!(e.obs||'').toLowerCase().includes(q))return false;
     if(tipo&&e.tipo!==tipo)return false; if(mes&&!(e.fecha||'').startsWith(mes))return false;
     if(calResp&&!(e.resp||'').includes(calResp))return false;
+    // Filtro Realizados: solo done. Cualquier otra vista: ocultar done.
+    const isDone=(e.done===true||e.done==='true'||e.done==='1'||e.done==='TRUE');
+    if(vista==='realizados'){ if(!isDone)return false; }
+    else { if(isDone)return false; }
     if(vista==='dia'&&e.fecha!==hoy)return false;
     if(vista==='semana'&&(e.fecha<semana.start||e.fecha>semana.end))return false;
     if(vista==='mes'&&!(e.fecha||'').startsWith(mesActual))return false;
@@ -1922,8 +1933,14 @@ function renderCal(){
     dayEvs.forEach(function(e){
       const obsText=(e.obs&&!e.obs.startsWith('http'))?e.obs:'';
       const linkUrl=e.link&&e.link.startsWith('http')?e.link:(e.obs&&e.obs.startsWith('http')?e.obs:'');
+      const isDone=(e.done===true||e.done==='true'||e.done==='1'||e.done==='TRUE');
+      const doneClass=isDone?' ev-done':'';
+      // Botón ✔ Realizado (solo si NO está done) o badge "Realizado" (si SI está done)
+      const tickBtn=isDone
+        ? '<span class="ev-done-badge" title="Completado'+(e.doneBy?' por '+e.doneBy:'')+(e.doneAt?' el '+e.doneAt:'')+'">✔ Realizado</span>'
+        : '<button class="ev-btn" style="color:#059669;border-color:#6ee7b7" onclick="markEventoRealizado('+e._i+')" title="Marcar como realizado">✔</button>';
       if(calView==='list'){
-        html+='<div class="event-card list-view '+evClass(e.tipo)+'">'+
+        html+='<div class="event-card list-view '+evClass(e.tipo)+doneClass+'">'+
           '<div><div class="ev-hora-big">'+(e.hora||'—')+'</div><div style="font-size:10px;color:#758B8F;text-transform:uppercase;font-weight:700;margin-top:2px">'+(e.tipo||'')+'</div></div>'+
           '<div><div class="ev-causa">'+(e.causa||'—')+'</div>'+(obsText?'<div class="ev-obs">'+obsText+'</div>':'')+
           (e.resp?'<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">'+(e.resp.split(',').filter(Boolean).map(function(u){return '<span class="resp-pill">👨\u200d💼 '+u.charAt(0).toUpperCase()+u.slice(1)+'</span>';}).join(''))+'</div>':'')+
@@ -1931,16 +1948,19 @@ function renderCal(){
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
           (linkUrl?'<a href="'+linkUrl+'" target="_blank" style="font-size:12px;color:#2F4F56;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none">📹 Link</a>':'')+
           '<a href="'+buildGCalLink(e)+'" target="_blank" style="font-size:11px;color:#4285f4;border:1px solid #d4c9be;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap">📅 Agendar</a>'+
+          tickBtn+
           '<button class="ev-btn" onclick="openEvModal('+e._i+')">Editar</button></div></div>';
       } else {
-        html+='<div class="event-card '+evClass(e.tipo)+'">'+
+        html+='<div class="event-card '+evClass(e.tipo)+doneClass+'">'+
           '<div class="ev-header"><span class="ev-tipo">'+(e.tipo||'Evento')+'</span><span class="ev-hora">'+(e.hora||'—')+'</span></div>'+
           '<div class="ev-causa">'+(e.causa||'—')+'</div>'+
           (obsText?'<div class="ev-obs">'+obsText+'</div>':'')+
           (linkUrl?'<div class="ev-link"><a href="'+linkUrl+'" target="_blank">📹 Abrir videoconferencia</a></div>':'')+
           (e.resp?'<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">'+(e.resp.split(',').filter(Boolean).map(function(u){return '<span class="resp-pill">👨\u200d💼 '+u.charAt(0).toUpperCase()+u.slice(1)+'</span>';}).join(''))+'</div>':'')+
           '<div class="ev-actions"><button class="ev-btn" onclick="openEvModal('+e._i+')">Editar</button>'+
-          '<a href="'+buildGCalLink(e)+'" target="_blank" class="ev-btn" style="text-decoration:none;color:#4285f4;border-color:#c5d9f8">📅 Agendar</a></div></div>';
+          '<a href="'+buildGCalLink(e)+'" target="_blank" class="ev-btn" style="text-decoration:none;color:#4285f4;border-color:#c5d9f8">📅 Agendar</a>'+
+          tickBtn+
+          '</div></div>';
       }
     });
     html+='</div></div>';
@@ -2015,6 +2035,30 @@ function deleteEv(){
   }
   state.eventos.splice(editEvIdx,1); closeEvModal();
   saveSheet(SHEET_CAL,state.eventos,EV_COLS); buildCalMeses(); renderCal();
+}
+
+// Marca un evento como realizado: queda en el calendario con flag done (filtrado de la vista normal,
+// visible bajo el filtro "Realizados") y además se copia al archivo de Pendientes.
+function markEventoRealizado(idx){
+  const ev=state.eventos[idx]; if(!ev) return;
+  if(!confirm('¿Marcar este evento como realizado?\n\nVa a desaparecer del calendario (queda visible con el filtro "Realizados") y se va a registrar en Pendientes → Ver archivo.')) return;
+  ev.done=true;
+  ev.doneBy=currentUser||'';
+  ev.doneAt=new Date().toLocaleDateString('es-AR');
+  // Copia al archivo, mapeando los campos del evento al esquema unificado del archivo:
+  //   tarea = tipo del evento, autos = causa, detalle = obs (link incluido si lo había)
+  const detalle=(ev.obs||'')+(ev.link?(ev.obs?'\n':'')+'Link: '+ev.link:'');
+  state.archivo=state.archivo||[];
+  state.archivo.push({
+    seccion:'evento',
+    data:{tarea:ev.tipo||'',autos:ev.causa||'',detalle:detalle,fecha:ev.fecha||'',hora:ev.hora||'',resp:ev.resp||'',_evento:JSON.parse(JSON.stringify(ev))},
+    req:ev.tipo||'', dem:detalle,
+    user:ev.doneBy, fecha:ev.doneAt, estado:'completado'
+  });
+  saveLocal();
+  saveSheet(SHEET_CAL,state.eventos,EV_COLS);
+  if(typeof saveArchivoSheet==='function') saveArchivoSheet();
+  buildCalMeses(); renderCal(); renderArchivo();
 }
 
 function buildGCalLink(e){
@@ -2253,7 +2297,25 @@ function renderPendFilterPills() {
     const count = (state.pendientes[c] || []).length;
     return '<button onclick="togglePendFilter(\''+c+'\')" style="padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;border:1px solid '+CAT_COLOR[c]+';background:'+(active?CAT_COLOR[c]:'#fff')+';color:'+(active?'#fff':CAT_COLOR[c])+';cursor:pointer;font-family:Montserrat,sans-serif">'+CAT_LABEL[c]+' <span style="opacity:.75;font-weight:500">('+count+')</span></button>';
   }).join('');
-  wrap.innerHTML = label + todasPill + pills;
+  // Filtro por responsable: dropdown a la derecha de los chips de categoría.
+  const respOpts = [
+    {v:'',label:'Todos los responsables'},
+    {v:'mati',label:'👨\u200d💼 Mati'},
+    {v:'juan',label:'👨\u200d💼 Juan'},
+    {v:'bruno',label:'👨\u200d💼 Bruno'},
+    {v:'seba',label:'👨\u200d💼 Seba'},
+    {v:'sin',label:'— Sin asignar'}
+  ];
+  const respHighlight = pendFilterResp ? 'border-color:#2F4F56;background:#e8e0d8;' : '';
+  const respDd = '<span style="margin-left:14px;font-size:11px;color:#758B8F;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-right:4px">Responsable:</span>'
+    + '<select id="pend-resp-filter" onchange="setPendRespFilter(this.value)" style="padding:5px 10px;border:1px solid #d4c9be;border-radius:14px;font-size:11px;font-weight:600;background:#fff;color:#2F4F56;cursor:pointer;font-family:Montserrat,sans-serif;'+respHighlight+'">'
+    + respOpts.map(function(o){return '<option value="'+o.v+'"'+(o.v===pendFilterResp?' selected':'')+'>'+o.label+'</option>';}).join('')
+    + '</select>';
+  wrap.innerHTML = label + todasPill + pills + respDd;
+}
+function setPendRespFilter(v) {
+  pendFilterResp = v || '';
+  renderPendientes();
 }
 function setPendFilter(mode) {
   if (mode === 'todas') pendFilterCats = new Set(PEND_CATS);
@@ -2387,8 +2449,17 @@ function renderPendientes(){
       all.push({ _cat: cat, _i: i, r: r });
     });
   });
-  // Filtrar por pills activas
-  const filtered = all.filter(function(x) { return pendFilterCats.has(x._cat); });
+  // Filtrar por pills activas + por responsable seleccionado en el dropdown
+  const filtered = all.filter(function(x) {
+    if (!pendFilterCats.has(x._cat)) return false;
+    if (pendFilterResp) {
+      const respStr = (x.r.resp || '').toString();
+      const respSet = new Set(respStr.split(',').map(function(s){return s.trim();}).filter(Boolean));
+      if (pendFilterResp === 'sin') { if (respSet.size > 0) return false; }
+      else { if (!respSet.has(pendFilterResp)) return false; }
+    }
+    return true;
+  });
   // Ordenar: primero los que tienen fecha (más cercana arriba), después los sin fecha
   filtered.sort(function(a, b) {
     const fa = a.r.fecha || '', fb = b.r.fecha || '';
@@ -2428,6 +2499,31 @@ function renderPendientes(){
 }
 function restaurarArchivo(idx){
   const item=state.archivo[idx];if(!item)return;
+  // Caso especial: ítem de calendario. Lo devolvemos al calendario sin el flag done.
+  if(item.seccion==='evento'){
+    const ev=(item.data && item.data._evento) ? Object.assign({},item.data._evento) : null;
+    if(ev){
+      delete ev.done; delete ev.doneBy; delete ev.doneAt;
+      // Si el evento original sigue en state.eventos (mismo tipo/fecha/causa), lo desmarcamos.
+      let found=-1;
+      state.eventos.forEach(function(e,i){
+        if(found<0 && e.tipo===ev.tipo && e.fecha===ev.fecha && e.hora===ev.hora && e.causa===ev.causa){ found=i; }
+      });
+      if(found>=0){
+        delete state.eventos[found].done;
+        delete state.eventos[found].doneBy;
+        delete state.eventos[found].doneAt;
+      } else {
+        state.eventos.push(ev);
+      }
+      state.archivo.splice(idx,1);
+      saveLocal();
+      saveSheet(SHEET_CAL,state.eventos,EV_COLS);
+      if(typeof saveArchivoSheet==='function') saveArchivoSheet();
+      buildCalMeses(); renderCal(); renderArchivo();
+      return;
+    }
+  }
   if(!state.pendientes[item.seccion])state.pendientes[item.seccion]=[];
   const restored=Object.assign({},item.data);
   const mf=item.seccion==='negociacion'?'seclo':item.seccion==='prueba'?'doc':'';
@@ -2437,11 +2533,26 @@ function restaurarArchivo(idx){
 }
 function renderArchivo(){
   const tb=document.getElementById('tb-archivo');
-  if(!state.archivo.length){tb.innerHTML='<tr><td colspan="6" class="empty">Sin registros archivados</td></tr>';return;}
-  const sn={negociacion:'En negociaci\u00f3n',demanda:'Para hacer demanda',prueba:'Prueba pendiente',sortear:'Sortear y subir',escritos:'Escritos PJN',telegrama:'Telegrama/CD'};
+  if(!state.archivo.length){tb.innerHTML='<tr><td colspan="7" class="empty">Sin registros archivados</td></tr>';return;}
+  const sn={negociacion:'En negociaci\u00f3n',demanda:'Para hacer demanda',prueba:'Prueba pendiente',sortear:'Sortear y subir',escritos:'Escritos PJN',telegrama:'Telegrama/CD',evento:'Evento (Calendario)'};
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   tb.innerHTML=[...state.archivo].reverse().map(function(r,ri){
     const realI=state.archivo.length-1-ri;
-    return'<tr><td><span class="badge b-st">'+(sn[r.seccion]||r.seccion)+'</span></td><td style="font-weight:600">'+(r.req||'—')+'</td><td style="color:#758B8F">'+(r.dem||'—')+'</td><td style="font-size:12px;font-weight:600">'+(r.user||'—')+'</td><td style="color:#758B8F;font-size:12px">'+(r.fecha||'—')+'</td><td><button onclick="restaurarArchivo('+realI+')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">↩ Restaurar</button></td></tr>';
+    const d=r.data||{};
+    // Compatibilidad: items nuevos tienen tarea/autos/detalle separados;
+    // los legacy guardan req/dem combinados — los respetamos sin tocar.
+    const tarea=d.tarea||r.req||'';
+    const autos=d.autos||'';
+    const detalle=d.detalle||r.dem||'';
+    const restoreBtn='<button onclick="restaurarArchivo('+realI+')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">↩ Restaurar</button>';
+    return '<tr>'
+      +'<td><span class="badge b-st">'+esc(sn[r.seccion]||r.seccion)+'</span></td>'
+      +'<td style="font-weight:600">'+(esc(tarea)||'—')+'</td>'
+      +'<td style="color:#758B8F">'+(esc(autos)||'—')+'</td>'
+      +'<td style="color:#758B8F">'+(esc(detalle)||'—')+'</td>'
+      +'<td style="font-size:12px;font-weight:600">'+(esc(r.user)||'—')+'</td>'
+      +'<td style="color:#758B8F;font-size:12px">'+(esc(r.fecha)||'—')+'</td>'
+      +'<td>'+restoreBtn+'</td></tr>';
   }).join('');
 }
 
