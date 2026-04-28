@@ -779,11 +779,11 @@ const ETAPA_CLASS = {
 const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
 const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt'];
 
-let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[],telegrama:[]}, notas:{}, archivo:[] };
+let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[],telegrama:[],otro:[]}, notas:{}, archivo:[] };
 // Vista unificada de pendientes: cada item lleva implícita su categoría (según el array donde vive).
-const PEND_CATS = ['escritos','telegrama','negociacion','demanda','sortear'];
-const CAT_LABEL = {escritos:'Escritos PJN', telegrama:'Telegrama/CD', negociacion:'En negociación', demanda:'Para hacer demanda', sortear:'Sortear y subir'};
-const CAT_COLOR = {escritos:'#4285f4', telegrama:'#8b5cf6', negociacion:'#059669', demanda:'#d97706', sortear:'#0891b2'};
+const PEND_CATS = ['escritos','telegrama','negociacion','demanda','sortear','otro'];
+const CAT_LABEL = {escritos:'Escritos PJN', telegrama:'Telegrama/CD', negociacion:'En negociación', demanda:'Para hacer demanda', sortear:'Sortear y subir', otro:'Otro'};
+const CAT_COLOR = {escritos:'#4285f4', telegrama:'#8b5cf6', negociacion:'#059669', demanda:'#d97706', sortear:'#0891b2', otro:'#4b5563'};
 let pendFilterCats = new Set(PEND_CATS);
 let pendFilterResp = ''; // '', 'mati', 'juan', 'bruno', 'seba', 'sin' (sin asignar)
 let currentFuero = 'laboral', editCausaIdx = null, editEvIdx = null, cuotasTemp = [], currentUser = '', currentSubTab = 'escritos', calView = 'cards';
@@ -919,7 +919,7 @@ function saveLocal() {
   saveArchivoSheet();
 }
 function parsePendientesSheet(rows) {
-  const pend = { negociacion:[], demanda:[], prueba:[], sortear:[], escritos:[], telegrama:[] };
+  const pend = { negociacion:[], demanda:[], prueba:[], sortear:[], escritos:[], telegrama:[], otro:[] };
   if (!rows || !rows.length) return pend;
   const data = rows[0][0] === 'seccion' ? rows.slice(1) : rows;
   data.forEach(function(r) {
@@ -951,16 +951,21 @@ function parseArchivoSheet(rows) {
 async function savePendientesSheet() {
   setSync('saving', 'Guardando...');
   const rows = [PEND_COLS.slice()];
-  ['negociacion','demanda','prueba','sortear','escritos','telegrama'].forEach(function(sec) {
+  ['negociacion','demanda','prueba','sortear','escritos','telegrama','otro'].forEach(function(sec) {
     (state.pendientes[sec] || []).forEach(function(obj) {
       rows.push([sec, JSON.stringify(obj || {})]);
     });
   });
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_PENDIENTES, action: 'write', rows }) });
-    setSync('saved', 'Guardado');
-    setTimeout(function() { setSync('', 'Listo'); }, 2000);
-  } catch(e) { setSync('error', 'Error al guardar pendientes'); }
+  // Trackeamos la write para que un refreshShared concurrente espere antes de leer.
+  const writePromise = (async function(){
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_PENDIENTES, action: 'write', rows }) });
+      setSync('saved', 'Guardado');
+      setTimeout(function() { setSync('', 'Listo'); }, 2000);
+    } catch(e) { setSync('error', 'Error al guardar pendientes'); }
+  })();
+  if (typeof _trackPendingWrite==='function') _trackPendingWrite(writePromise);
+  await writePromise;
 }
 async function saveArchivoSheet() {
   setSync('saving', 'Guardando...');
@@ -973,11 +978,16 @@ async function saveArchivoSheet() {
       it.user || '', it.fecha || '', it.estado || ''
     ]);
   });
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_ARCHIVO, action: 'write', rows }) });
-    setSync('saved', 'Guardado');
-    setTimeout(function() { setSync('', 'Listo'); }, 2000);
-  } catch(e) { setSync('error', 'Error al guardar archivo'); }
+  // Trackeamos la write para que un refreshShared concurrente espere antes de leer.
+  const writePromise = (async function(){
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet: SHEET_ARCHIVO, action: 'write', rows }) });
+      setSync('saved', 'Guardado');
+      setTimeout(function() { setSync('', 'Listo'); }, 2000);
+    } catch(e) { setSync('error', 'Error al guardar archivo'); }
+  })();
+  if (typeof _trackPendingWrite==='function') _trackPendingWrite(writePromise);
+  await writePromise;
 }
 function parseNotasSheet(rows) {
   const notas = {};
@@ -1176,11 +1186,17 @@ async function saveSheet(sheet, data, cols) {
     }
     return v || '';
   }))];
-  try {
-    await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet, action: 'write', rows }) });
-    setSync('saved', 'Guardado');
-    setTimeout(function() { setSync('', 'Listo'); }, 2000);
-  } catch(e) { setSync('error', 'Error al guardar'); }
+  // Toda write a Sheets queda registrada en _pendingWrites para que un refreshShared
+  // concurrente espere antes de leer (si no, lee datos viejos y pisa el state local).
+  const writePromise = (async function(){
+    try {
+      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ sheet, action: 'write', rows }) });
+      setSync('saved', 'Guardado');
+      setTimeout(function() { setSync('', 'Listo'); }, 2000);
+    } catch(e) { setSync('error', 'Error al guardar'); }
+  })();
+  if (typeof _trackPendingWrite==='function') _trackPendingWrite(writePromise);
+  await writePromise;
 }
 
 function showSec(id, el) {
@@ -1193,11 +1209,28 @@ function showSec(id, el) {
     refreshShared();
   }
 }
+// Tracking de writes pendientes a Sheets. Si un refreshShared corre mientras
+// hay una write en vuelo (típico al cambiar de tab justo después de marcar
+// un evento como realizado), esperamos a que termine antes de hacer fetch,
+// si no leemos datos viejos y pisamos el state local — el evento reaparecía.
+const _pendingWrites = new Set();
+function _trackPendingWrite(p){
+  if(!p||typeof p.then!=='function')return;
+  _pendingWrites.add(p);
+  const cleanup=function(){ _pendingWrites.delete(p); };
+  p.then(cleanup, cleanup);
+}
+async function _awaitPendingWrites(){
+  if(!_pendingWrites.size)return;
+  try{ await Promise.all(Array.from(_pendingWrites)); }catch(e){}
+}
 // Re-fetch de datos compartidos (calendario + pendientes + archivo + causas) sin parpadeo.
 let _refreshInFlight = false;
 async function refreshShared() {
   if (_refreshInFlight || !currentUser) return;
   _refreshInFlight = true;
+  // Esperar a que se completen las writes pendientes antes de leer del sheet.
+  await _awaitPendingWrites();
   try {
     // 7 fetches en paralelo
     const [lab, cyc, caut, cal, pendR, archR, notR] = await Promise.all([
@@ -2044,26 +2077,64 @@ function deleteEv(){
 
 // Marca un evento como realizado: queda en el calendario con flag done (filtrado de la vista normal,
 // visible bajo el filtro "Realizados") y además se copia al archivo de Pendientes.
-function markEventoRealizado(idx){
+// Helper: chequea si un valor de "done" cuenta como verdadero.
+// Apps Script puede devolver true|"true"|"TRUE"|1|"1" según el cell value.
+function _evDoneTruthy(v){ return v===true||v==='true'||v==='TRUE'||v===1||v==='1'; }
+
+async function markEventoRealizado(idx){
   const ev=state.eventos[idx]; if(!ev) return;
+  // Guard 1: si el evento ya está marcado como realizado, no hacer nada.
+  // Esto evita el bug de doble-click: usuario clickea, evento se oculta,
+  // un refreshShared trae datos viejos del sheet y el evento reaparece,
+  // usuario clickea de nuevo → push duplicado al archivo.
+  if (_evDoneTruthy(ev.done)) {
+    // Re-render por las dudas para ocultarlo si la UI quedó desincronizada.
+    buildCalMeses(); renderCal();
+    return;
+  }
   if(!confirm('¿Marcar este evento como realizado?\n\nVa a desaparecer del calendario (queda visible con el filtro "Realizados") y se va a registrar en Pendientes → Ver archivo.')) return;
   ev.done=true;
   ev.doneBy=currentUser||'';
   ev.doneAt=new Date().toLocaleDateString('es-AR');
+  // Guard 2: idempotencia del push al archivo.
+  // Aunque ev.done ya esté en true en memoria, puede pasar que un refreshShared
+  // anterior haya traido la entrada del archivo del sheet (con la fecha en ISO),
+  // pero todavía no haya traido el done=true del calendario (sheets distintas).
+  // Por eso, antes de pushear chequeamos por (tipo+causa+fecha+hora) si ya existe
+  // una entrada del archivo apuntando a este mismo evento.
+  const dupKey=(ev.tipo||'')+'|'+(ev.causa||'')+'|'+(ev.fecha||'')+'|'+(ev.hora||'');
+  state.archivo=state.archivo||[];
+  const yaExiste=state.archivo.some(function(a){
+    if(a.seccion!=='evento')return false;
+    const e=(a.data&&a.data._evento)||{};
+    const d=a.data||{};
+    const k=(e.tipo||a.req||d.tarea||'')+'|'+(e.causa||d.autos||'')+'|'+(e.fecha||d.fecha||'')+'|'+(e.hora||d.hora||'');
+    return k===dupKey;
+  });
   // Copia al archivo, mapeando los campos del evento al esquema unificado del archivo:
   //   tarea = tipo del evento, autos = causa, detalle = obs (link incluido si lo había)
   const detalle=(ev.obs||'')+(ev.link?(ev.obs?'\n':'')+'Link: '+ev.link:'');
-  state.archivo=state.archivo||[];
-  state.archivo.push({
-    seccion:'evento',
-    data:{tarea:ev.tipo||'',autos:ev.causa||'',detalle:detalle,fecha:ev.fecha||'',hora:ev.hora||'',resp:ev.resp||'',_evento:JSON.parse(JSON.stringify(ev))},
-    req:ev.tipo||'', dem:detalle,
-    user:ev.doneBy, fecha:ev.doneAt, estado:'completado'
-  });
+  if(!yaExiste){
+    state.archivo.push({
+      seccion:'evento',
+      data:{tarea:ev.tipo||'',autos:ev.causa||'',detalle:detalle,fecha:ev.fecha||'',hora:ev.hora||'',resp:ev.resp||'',_evento:JSON.parse(JSON.stringify(ev))},
+      req:ev.tipo||'', dem:detalle,
+      user:ev.doneBy, fecha:ev.doneAt, estado:'completado'
+    });
+  }
   saveLocal();
-  saveSheet(SHEET_CAL,state.eventos,EV_COLS);
-  if(typeof saveArchivoSheet==='function') saveArchivoSheet();
+  // Re-render local YA, antes de los awaits, para que el usuario vea feedback inmediato.
   buildCalMeses(); renderCal(); renderArchivo();
+  // Persistir en Sheets esperando ambas writes. saveSheet/saveArchivoSheet ya
+  // se registran solos en _pendingWrites, así que un refreshShared concurrente
+  // espera antes de leer (evita stale reads que hacían reaparecer el evento).
+  const p1=saveSheet(SHEET_CAL,state.eventos,EV_COLS);
+  if(typeof saveArchivoSheet==='function'){
+    const p2=saveArchivoSheet();
+    try{ await Promise.all([p1,p2]); }catch(e){ console.error('[markEventoRealizado] save fallo:',e); }
+  } else {
+    try{ await p1; }catch(e){ console.error('[markEventoRealizado] save fallo:',e); }
+  }
 }
 
 function buildGCalLink(e){
@@ -2544,7 +2615,7 @@ function renderArchivo(){
     if(cnt) cnt.textContent='';
     return;
   }
-  const sn={negociacion:'En negociaci\u00f3n',demanda:'Para hacer demanda',prueba:'Prueba pendiente',sortear:'Sortear y subir',escritos:'Escritos PJN',telegrama:'Telegrama/CD',evento:'Evento (Calendario)'};
+  const sn={negociacion:'En negociaci\u00f3n',demanda:'Para hacer demanda',prueba:'Prueba pendiente',sortear:'Sortear y subir',escritos:'Escritos PJN',telegrama:'Telegrama/CD',otro:'Otro',evento:'Evento (Calendario)'};
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   // Buscador multi-campo: misma lógica que causas — split por palabras y match AND
   // sobre la concatenación de TODOS los campos visibles del item archivado.
