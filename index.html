@@ -58,6 +58,7 @@ tr.data-row:hover td{background:#faf7f4;cursor:pointer}
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .b-dc{background:#dbeafe;color:#1e40af}.b-tl{background:#ede9fe;color:#5b21b6}
 .b-pr{background:#fef3c7;color:#92400e}.b-st{background:#d1fae5;color:#065f46}
+.badge.b-evento{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd}
 .b-ej{background:#fee2e2;color:#991b1b}.b-co{background:#d1fae5;color:#065f46}
 .b-ac{background:#d1fae5;color:#065f46}.b-nd{background:#f3f4f6;color:#6b7280}
 .hacer-tag{display:inline-block;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -457,6 +458,10 @@ tr.data-row.expanded td{background:#f5f0eb}
   <div class="section-header">
     <span class="section-title">Archivo — Completados</span>
     <button class="btn-cancel" onclick="showSec('pendientes',null)">← Volver a pendientes</button>
+  </div>
+  <div class="filters" style="margin-bottom:12px">
+    <input class="search-input" type="text" id="arch-search" placeholder="Buscar por categoría, tarea, autos, detalle, usuario..." oninput="renderArchivo()" style="flex:1;min-width:260px">
+    <span id="arch-count" style="font-size:12px;color:#758B8F;align-self:center"></span>
   </div>
   <div class="table-wrap">
     <table style="table-layout:auto">
@@ -2533,23 +2538,53 @@ function restaurarArchivo(idx){
 }
 function renderArchivo(){
   const tb=document.getElementById('tb-archivo');
-  if(!state.archivo.length){tb.innerHTML='<tr><td colspan="7" class="empty">Sin registros archivados</td></tr>';return;}
+  const cnt=document.getElementById('arch-count');
+  if(!state.archivo.length){
+    tb.innerHTML='<tr><td colspan="7" class="empty">Sin registros archivados</td></tr>';
+    if(cnt) cnt.textContent='';
+    return;
+  }
   const sn={negociacion:'En negociaci\u00f3n',demanda:'Para hacer demanda',prueba:'Prueba pendiente',sortear:'Sortear y subir',escritos:'Escritos PJN',telegrama:'Telegrama/CD',evento:'Evento (Calendario)'};
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  tb.innerHTML=[...state.archivo].reverse().map(function(r,ri){
-    const realI=state.archivo.length-1-ri;
+  // Buscador multi-campo: misma lógica que causas — split por palabras y match AND
+  // sobre la concatenación de TODOS los campos visibles del item archivado.
+  const qRaw=((document.getElementById('arch-search')||{}).value||'').toLowerCase().trim();
+  const tokens=qRaw?qRaw.split(/\s+/).filter(Boolean):[];
+  // Pre-armamos un array enriquecido que conserva el índice real para Restaurar.
+  const items=state.archivo.map(function(r,realI){
     const d=r.data||{};
-    // Compatibilidad: items nuevos tienen tarea/autos/detalle separados;
-    // los legacy guardan req/dem combinados — los respetamos sin tocar.
     const tarea=d.tarea||r.req||'';
     const autos=d.autos||'';
     const detalle=d.detalle||r.dem||'';
-    const restoreBtn='<button onclick="restaurarArchivo('+realI+')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">↩ Restaurar</button>';
+    const catLabel=sn[r.seccion]||r.seccion||'';
+    return {realI:realI, r:r, tarea:tarea, autos:autos, detalle:detalle, catLabel:catLabel};
+  });
+  const filtered=tokens.length
+    ? items.filter(function(it){
+        const blob=(it.catLabel+' '+it.tarea+' '+it.autos+' '+it.detalle+' '+(it.r.user||'')+' '+(it.r.fecha||'')+' '+(it.r.seccion||'')).toLowerCase();
+        return tokens.every(function(t){return blob.indexOf(t)!==-1;});
+      })
+    : items;
+  if(cnt){
+    cnt.textContent=tokens.length
+      ? (filtered.length+' de '+items.length+' resultado'+(items.length===1?'':'s'))
+      : (items.length+' registro'+(items.length===1?'':'s'));
+  }
+  if(!filtered.length){
+    tb.innerHTML='<tr><td colspan="7" class="empty">Sin coincidencias para "'+esc(qRaw)+'"</td></tr>';
+    return;
+  }
+  tb.innerHTML=filtered.slice().reverse().map(function(it){
+    const r=it.r;
+    const restoreBtn='<button onclick="restaurarArchivo('+it.realI+')" style="padding:4px 10px;border:1px solid #d4c9be;border-radius:6px;font-size:11px;background:#fff;cursor:pointer;color:#2F4F56;font-family:\'Montserrat\',sans-serif">↩ Restaurar</button>';
+    // Eventos del calendario van con un badge violeta para diferenciarlos visualmente
+    // del resto de los pendientes archivados (que son verdes).
+    const badgeCls=(r.seccion==='evento')?'badge b-evento':'badge b-st';
     return '<tr>'
-      +'<td><span class="badge b-st">'+esc(sn[r.seccion]||r.seccion)+'</span></td>'
-      +'<td style="font-weight:600">'+(esc(tarea)||'—')+'</td>'
-      +'<td style="color:#758B8F">'+(esc(autos)||'—')+'</td>'
-      +'<td style="color:#758B8F">'+(esc(detalle)||'—')+'</td>'
+      +'<td><span class="'+badgeCls+'">'+esc(it.catLabel)+'</span></td>'
+      +'<td style="font-weight:600">'+(esc(it.tarea)||'—')+'</td>'
+      +'<td style="color:#758B8F">'+(esc(it.autos)||'—')+'</td>'
+      +'<td style="color:#758B8F">'+(esc(it.detalle)||'—')+'</td>'
       +'<td style="font-size:12px;font-weight:600">'+(esc(r.user)||'—')+'</td>'
       +'<td style="color:#758B8F;font-size:12px">'+(esc(r.fecha)||'—')+'</td>'
       +'<td>'+restoreBtn+'</td></tr>';
