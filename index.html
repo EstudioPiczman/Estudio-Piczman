@@ -1409,9 +1409,16 @@ function openCausaModal(idx) {
   const c = (editCausaIdx !== null) ? d[editCausaIdx] : {};
   document.getElementById('modal-causa-title').textContent = (editCausaIdx !== null) ? 'Editar causa' : 'Nueva causa';
   document.getElementById('btn-delete-causa').style.display = (editCausaIdx !== null) ? 'block' : 'none';
-  ['autos','expte','juzgado','cel','detalle','hacer','pendPrueba','msg','msgMes','drive'].forEach(function(f) {
+  // OJO: 'pendPrueba' y 'msgMes' NO entran en el loop genérico porque sus IDs
+  // en el DOM son kebab-case ('f-pend-prueba', 'f-msg-mes') y el loop arma
+  // 'f-' + camelCase. Antes, getElementById devolvía null, el textarea NO se
+  // reseteaba al cambiar de causa, y al guardar se contaminaba con el valor
+  // de la causa anterior. Los reseteamos explícitamente más abajo.
+  ['autos','expte','juzgado','cel','detalle','hacer','msg','drive'].forEach(function(f) {
     const el = document.getElementById('f-' + f); if (el) el.value = c[f] || '';
   });
+  const pendPruebaEl = document.getElementById('f-pend-prueba');
+  if (pendPruebaEl) pendPruebaEl.value = c.pendPrueba || '';
   document.getElementById('f-fuero').value = c.fuero || currentFuero;
   document.getElementById('f-etapa-m').value = c.etapa || 'Demanda/Contestación';
   document.getElementById('f-monto-dem').value = c.montoDem || '';
