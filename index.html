@@ -777,7 +777,9 @@ const ETAPA_CLASS = {
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
 const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
-const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt'];
+// 'evid' y 'evpass' apendeados al final para no alterar el orden histórico de columnas
+// en la sheet Calendario. Eventos viejos quedan con esos campos vacíos.
+const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt','evid','evpass'];
 
 let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[],telegrama:[],otro:[]}, notas:{}, archivo:[] };
 // Vista unificada de pendientes: cada item lleva implícita su categoría (según el array donde vive).
@@ -2044,7 +2046,9 @@ function openEvModal(idx){
 function closeEvModal(){document.getElementById('modal-ev-bg').classList.remove('open'); window._pendEvLink=null;}
 function saveEv(){
   const fecha=document.getElementById('ev-fecha').value, hora=document.getElementById('ev-hora').value;
-  const obj={tipo:document.getElementById('ev-tipo').value,fechahora:fecha&&hora?fecha+' '+hora:fecha||hora||'',fecha:fecha,hora:hora,causa:document.getElementById('ev-causa').value,link:document.getElementById('ev-link').value,obs:document.getElementById('ev-obs').value,resp:document.getElementById('ev-resp').value};
+  // ev-id y ev-pass se leen acá: antes faltaban en el obj y por eso se perdían al guardar.
+  const evidEl=document.getElementById('ev-id'), evpassEl=document.getElementById('ev-pass');
+  const obj={tipo:document.getElementById('ev-tipo').value,fechahora:fecha&&hora?fecha+' '+hora:fecha||hora||'',fecha:fecha,hora:hora,causa:document.getElementById('ev-causa').value,link:document.getElementById('ev-link').value,evid:evidEl?evidEl.value:'',evpass:evpassEl?evpassEl.value:'',obs:document.getElementById('ev-obs').value,resp:document.getElementById('ev-resp').value};
   // Preservar pendLink existente al editar
   if(editEvIdx!==null && state.eventos[editEvIdx] && state.eventos[editEvIdx].pendLink){
     obj.pendLink = state.eventos[editEvIdx].pendLink;
