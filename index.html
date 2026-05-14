@@ -561,7 +561,34 @@ tr.data-row.expanded td{background:#f5f0eb}
           <a id="f-drive-btn" href="#" target="_blank" onclick="return openDriveLink()" title="Abrir Drive" style="padding:9px 12px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#758B8F;text-decoration:none;font-size:14px;white-space:nowrap;display:none">🔗 Abrir</a>
         </div>
       </div>
-      <div class="form-group full"><label>Último movimiento / detalle</label><textarea id="f-detalle"></textarea></div>
+      <div class="form-group full">
+        <!-- f-detalle queda como hidden input: lo seguimos seteando con la entrada más reciente
+             del historial para que renderTable, descargarLegajo y saveCausa funcionen sin tocar. -->
+        <input type="hidden" id="f-detalle">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
+          <!-- ÚLTIMO MOVIMIENTO / DETALLE (con historial) -->
+          <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
+            <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último movimiento / detalle</label>
+            <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:8px">
+              <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="flex:1;min-height:48px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:vertical"></textarea>
+              <button type="button" onclick="addDetalleEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+            </div>
+            <div id="detalle-hist-list" style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto"></div>
+          </div>
+          <!-- ÚLTIMO ESCRITO PRESENTADO (con historial + fecha) -->
+          <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
+            <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último escrito presentado</label>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+              <textarea id="f-escrito-new" placeholder="Descripción del escrito..." style="min-height:48px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:vertical"></textarea>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="date" id="f-escrito-fecha" title="Fecha del escrito (opcional)" style="flex:1;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">
+                <button type="button" onclick="addEscritoEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+              </div>
+            </div>
+            <div id="escrito-hist-list" style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
       <div class="form-group full"><label>Para hacer (pendientes)</label><textarea id="f-hacer" style="min-height:52px"></textarea></div>
     </div>
   </div>
@@ -776,7 +803,11 @@ const ETAPA_CLASS = {
   'Sentencia':'b-st','Ejecución':'b-ej','Conciliado':'b-co',
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
-const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
+// 'detalleHist' y 'escritoHist' se agregan al FINAL para preservar el orden histórico de
+// columnas en las sheets. Causas viejas leen esas columnas como '' (parser tolera ausencia)
+// y al primer guardado se persisten — sin perder 'detalle' legacy, que se siembra como
+// primera entrada del historial al abrir el modal por primera vez (ver openCausaModal).
+const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct','detalleHist','escritoHist'];
 // 'evid' y 'evpass' apendeados al final para no alterar el orden histórico de columnas
 // en la sheet Calendario. Eventos viejos quedan con esos campos vacíos.
 const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt','evid','evpass'];
@@ -794,7 +825,7 @@ let cobrosTabActual = 'cobrar';
 let notasView = 'lista';
 let calGridYear = new Date().getFullYear(), calGridMonth = new Date().getMonth();
 let notasArchivoVisible = false;
-let oficiosTemp = [], testigosTemp = [], pericialTemp = [];
+let oficiosTemp = [], testigosTemp = [], pericialTemp = [], detalleHistTemp = [], escritoHistTemp = [];
 
 function doLogin() {
   const u = document.getElementById('u-in').value.trim().toLowerCase();
@@ -1444,6 +1475,28 @@ function openCausaModal(idx) {
   try { pericialTemp = c.peri ? JSON.parse(c.peri) : []; if (!Array.isArray(pericialTemp)) throw 0; }
   catch(e) { pericialTemp = []; }
   if (editCausaIdx === null) pericialTemp = [{tipo:'Pericial Contable',fsDesig:'',fsPresent:''}];
+  // ===== Historial de Último movimiento + Último escrito presentado =====
+  // detalleHistInit / escritoHistInit: si la causa ya tiene el campo (aunque sea '[]'),
+  // respetamos lo guardado. Si NO existe (causas viejas) y hay 'detalle' legacy con texto,
+  // lo sembramos como primera entrada marcada 'legacy' para que nada se pierda.
+  let _detHistInit = false;
+  try {
+    if (c.detalleHist) { detalleHistTemp = JSON.parse(c.detalleHist); if (!Array.isArray(detalleHistTemp)) throw 0; _detHistInit = true; }
+    else detalleHistTemp = [];
+  } catch(e) { detalleHistTemp = []; }
+  if (!_detHistInit && !detalleHistTemp.length && c.detalle && String(c.detalle).trim()) {
+    detalleHistTemp.push({ texto: String(c.detalle).trim(), fecha: '', user: '', legacy: true });
+  }
+  let _escHistInit = false;
+  try {
+    if (c.escritoHist) { escritoHistTemp = JSON.parse(c.escritoHist); if (!Array.isArray(escritoHistTemp)) throw 0; _escHistInit = true; }
+    else escritoHistTemp = [];
+  } catch(e) { escritoHistTemp = []; }
+  // Limpiar los inputs de "agregar" para que no arrastren texto entre causas
+  const _dnew = document.getElementById('f-detalle-new'); if (_dnew) _dnew.value = '';
+  const _enew = document.getElementById('f-escrito-new'); if (_enew) _enew.value = '';
+  const _efec = document.getElementById('f-escrito-fecha'); if (_efec) _efec.value = '';
+  renderDetalleHist(); renderEscritoHist();
   renderOficios(); renderTestigos(); renderPericial(); renderCuotas(); updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
   document.getElementById('modal-causa-bg').classList.add('open');
@@ -1486,6 +1539,28 @@ function saveCausa() {
     drive: document.getElementById('f-drive') ? document.getElementById('f-drive').value : '',
     tasaPct: ''
   };
+  // ===== Flush + persistencia de historiales =====
+  // Si el usuario dejó texto escrito en los textareas de "Agregar" sin haber clickeado
+  // el botón, lo guardamos igual como una nueva entrada. Así nadie pierde lo que tipeó.
+  const _pendDet = (document.getElementById('f-detalle-new') || {}).value;
+  if (_pendDet && _pendDet.trim()) {
+    detalleHistTemp.unshift({ texto: _pendDet.trim(), fecha: new Date().toLocaleDateString('es-AR'), user: currentUser || '' });
+  }
+  const _pendEsc = (document.getElementById('f-escrito-new') || {}).value;
+  if (_pendEsc && _pendEsc.trim()) {
+    const _ef = (document.getElementById('f-escrito-fecha') || {}).value;
+    let _fdisp;
+    if (_ef) {
+      try { const _dd = new Date(_ef + 'T00:00:00'); _fdisp = !isNaN(_dd) ? _dd.toLocaleDateString('es-AR') : _ef; } catch(e) { _fdisp = _ef; }
+    } else { _fdisp = new Date().toLocaleDateString('es-AR'); }
+    escritoHistTemp.unshift({ texto: _pendEsc.trim(), fecha: _fdisp, user: currentUser || '' });
+  }
+  // obj.detalle queda sincronizado con la entrada más reciente del historial (compat
+  // con renderTable, descargarLegajo y el panel de detalle). Si el historial quedó vacío
+  // (todas las entradas eliminadas), obj.detalle se vacía también — la lista muestra "—".
+  obj.detalle = (detalleHistTemp[0] && detalleHistTemp[0].texto) || '';
+  obj.detalleHist = JSON.stringify(detalleHistTemp || []);
+  obj.escritoHist = JSON.stringify(escritoHistTemp || []);
   const arr = getFueroState(fuero);
   if (editCausaIdx !== null && fuero === currentFuero) arr[editCausaIdx] = obj;
   else arr.push(obj);
@@ -1581,6 +1656,83 @@ function renderPericial() {
   }).join('');
 }
 function addPericial() { pericialTemp.push({tipo:'',fsDesig:'',fsPresent:''}); renderPericial(); }
+// ===== HISTORIAL: Último movimiento + Último escrito presentado =====
+// Convención: las entradas se guardan con la MÁS RECIENTE primero (unshift).
+// Cada entrada: { texto, fecha, user, legacy? }. La legacy se muestra como "(anterior)".
+function _hEscHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function renderDetalleHist() {
+  const el = document.getElementById('detalle-hist-list'); if (!el) return;
+  if (!detalleHistTemp.length) {
+    el.innerHTML = '<div style="font-size:11px;color:#a0b4b8;padding:6px 4px;font-style:italic">Sin movimientos registrados</div>';
+    return;
+  }
+  el.innerHTML = detalleHistTemp.map(function(h, i) {
+    const fechaTxt = h.legacy ? '(anterior)' : (h.fecha || '—');
+    const userTxt  = h.user ? ' · ' + h.user : '';
+    return '<div style="display:flex;gap:8px;padding:6px 8px;background:#fff;border:1px solid #e8e0d8;border-radius:6px;border-left:3px solid ' + (i===0 ? '#2F4F56' : '#d4c9be') + '">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:12px;color:#2F4F56;line-height:1.4;word-break:break-word;white-space:pre-wrap">' + _hEscHtml(h.texto) + '</div>' +
+      '<div style="font-size:10px;color:#758B8F;margin-top:3px;text-transform:uppercase;letter-spacing:.04em;font-weight:600">' + _hEscHtml(fechaTxt) + _hEscHtml(userTxt) + '</div>' +
+      '</div>' +
+      '<button class="btn-rm" onclick="rmDetalleEntry(' + i + ')" title="Eliminar entrada" style="font-size:14px;padding:0 4px;align-self:flex-start">\xd7</button>' +
+      '</div>';
+  }).join('');
+}
+function addDetalleEntry() {
+  const ta = document.getElementById('f-detalle-new'); if (!ta) return;
+  const t = (ta.value || '').trim(); if (!t) return;
+  detalleHistTemp.unshift({ texto: t, fecha: new Date().toLocaleDateString('es-AR'), user: currentUser || '' });
+  ta.value = '';
+  // Mantener f-detalle hidden actualizado con la entrada más reciente
+  const hidden = document.getElementById('f-detalle'); if (hidden) hidden.value = t;
+  renderDetalleHist();
+}
+function rmDetalleEntry(i) {
+  if (!confirm('¿Eliminar esta entrada del historial?\n\nSe va a guardar definitivamente cuando confirmes la causa.')) return;
+  detalleHistTemp.splice(i, 1);
+  const hidden = document.getElementById('f-detalle');
+  if (hidden) hidden.value = (detalleHistTemp[0] && detalleHistTemp[0].texto) || '';
+  renderDetalleHist();
+}
+function renderEscritoHist() {
+  const el = document.getElementById('escrito-hist-list'); if (!el) return;
+  if (!escritoHistTemp.length) {
+    el.innerHTML = '<div style="font-size:11px;color:#a0b4b8;padding:6px 4px;font-style:italic">Sin escritos registrados</div>';
+    return;
+  }
+  el.innerHTML = escritoHistTemp.map(function(h, i) {
+    const fechaTxt = h.fecha || '—';
+    const userTxt  = h.user ? ' · ' + h.user : '';
+    return '<div style="display:flex;gap:8px;padding:6px 8px;background:#fff;border:1px solid #e8e0d8;border-radius:6px;border-left:3px solid ' + (i===0 ? '#d97706' : '#d4c9be') + '">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:12px;color:#2F4F56;line-height:1.4;word-break:break-word;white-space:pre-wrap">' + _hEscHtml(h.texto) + '</div>' +
+      '<div style="font-size:10px;color:#758B8F;margin-top:3px;text-transform:uppercase;letter-spacing:.04em;font-weight:600">' + _hEscHtml(fechaTxt) + _hEscHtml(userTxt) + '</div>' +
+      '</div>' +
+      '<button class="btn-rm" onclick="rmEscritoEntry(' + i + ')" title="Eliminar entrada" style="font-size:14px;padding:0 4px;align-self:flex-start">\xd7</button>' +
+      '</div>';
+  }).join('');
+}
+function addEscritoEntry() {
+  const ta = document.getElementById('f-escrito-new'); if (!ta) return;
+  const t = (ta.value || '').trim(); if (!t) return;
+  const fechaInput = document.getElementById('f-escrito-fecha');
+  let fechaDisplay;
+  if (fechaInput && fechaInput.value) {
+    try { const d = new Date(fechaInput.value + 'T00:00:00'); fechaDisplay = !isNaN(d) ? d.toLocaleDateString('es-AR') : fechaInput.value; }
+    catch(e) { fechaDisplay = fechaInput.value; }
+  } else {
+    fechaDisplay = new Date().toLocaleDateString('es-AR');
+  }
+  escritoHistTemp.unshift({ texto: t, fecha: fechaDisplay, user: currentUser || '' });
+  ta.value = '';
+  if (fechaInput) fechaInput.value = '';
+  renderEscritoHist();
+}
+function rmEscritoEntry(i) {
+  if (!confirm('¿Eliminar este escrito del historial?\n\nSe va a guardar definitivamente cuando confirmes la causa.')) return;
+  escritoHistTemp.splice(i, 1);
+  renderEscritoHist();
+}
 
 const PRUEBA_OPTS = [
   {id:'doc',     label:'Documental',                   cls:'pt-doc'},
