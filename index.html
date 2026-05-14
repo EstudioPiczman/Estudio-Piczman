@@ -581,7 +581,8 @@ tr.data-row.expanded td{background:#f5f0eb}
             <!-- Mini formulario colapsado por defecto. Se abre al tocar "+ Agregar". -->
             <div id="add-detalle-form" style="display:none;margin-bottom:8px">
               <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="width:100%;min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none;margin-bottom:6px"></textarea>
-              <div style="display:flex;gap:6px;justify-content:flex-end">
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="date" id="f-detalle-fecha" title="Fecha del movimiento (opcional)" style="flex:1;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">
                 <button type="button" onclick="toggleAddDetalle()" style="padding:5px 11px;background:#fff;color:#758B8F;border:1px solid #d4c9be;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Cancelar</button>
                 <button type="button" onclick="addDetalleEntry()" style="padding:5px 11px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Guardar</button>
               </div>
@@ -1512,6 +1513,7 @@ function openCausaModal(idx) {
   } catch(e) { escritoHistTemp = []; }
   // Limpiar los inputs de "agregar" para que no arrastren texto entre causas
   const _dnew = document.getElementById('f-detalle-new'); if (_dnew) _dnew.value = '';
+  const _dfec = document.getElementById('f-detalle-fecha'); if (_dfec) _dfec.value = '';
   const _enew = document.getElementById('f-escrito-new'); if (_enew) _enew.value = '';
   const _efec = document.getElementById('f-escrito-fecha'); if (_efec) _efec.value = '';
   // Colapsar los mini-formularios al abrir una causa
@@ -1565,7 +1567,13 @@ function saveCausa() {
   // el botón, lo guardamos igual como una nueva entrada. Así nadie pierde lo que tipeó.
   const _pendDet = (document.getElementById('f-detalle-new') || {}).value;
   if (_pendDet && _pendDet.trim()) {
-    detalleHistTemp.unshift({ texto: _pendDet.trim(), fecha: new Date().toLocaleDateString('es-AR'), user: currentUser || '' });
+    // Si el usuario eligió fecha en el mini-form de detalle, usarla.
+    const _df = (document.getElementById('f-detalle-fecha') || {}).value;
+    let _dfdisp;
+    if (_df) {
+      try { const _ddd = new Date(_df + 'T00:00:00'); _dfdisp = !isNaN(_ddd) ? _ddd.toLocaleDateString('es-AR') : _df; } catch(e) { _dfdisp = _df; }
+    } else { _dfdisp = new Date().toLocaleDateString('es-AR'); }
+    detalleHistTemp.unshift({ texto: _pendDet.trim(), fecha: _dfdisp, user: currentUser || '' });
   }
   const _pendEsc = (document.getElementById('f-escrito-new') || {}).value;
   if (_pendEsc && _pendEsc.trim()) {
@@ -1702,8 +1710,18 @@ function renderDetalleHist() {
 function addDetalleEntry() {
   const ta = document.getElementById('f-detalle-new'); if (!ta) return;
   const t = (ta.value || '').trim(); if (!t) return;
-  detalleHistTemp.unshift({ texto: t, fecha: new Date().toLocaleDateString('es-AR'), user: currentUser || '' });
+  // Fecha: si el usuario eligió una en el input, se usa; sino, fecha de hoy.
+  const fechaInput = document.getElementById('f-detalle-fecha');
+  let fechaDisplay;
+  if (fechaInput && fechaInput.value) {
+    try { const d = new Date(fechaInput.value + 'T00:00:00'); fechaDisplay = !isNaN(d) ? d.toLocaleDateString('es-AR') : fechaInput.value; }
+    catch(e) { fechaDisplay = fechaInput.value; }
+  } else {
+    fechaDisplay = new Date().toLocaleDateString('es-AR');
+  }
+  detalleHistTemp.unshift({ texto: t, fecha: fechaDisplay, user: currentUser || '' });
   ta.value = '';
+  if (fechaInput) fechaInput.value = '';
   // Mantener f-detalle hidden actualizado con la entrada más reciente
   const hidden = document.getElementById('f-detalle'); if (hidden) hidden.value = t;
   // Colapsar el mini-form después de guardar
@@ -1721,6 +1739,7 @@ function toggleAddDetalle() {
     f.style.display = 'none';
     // Cancelar limpia lo escrito sin guardar
     const ta = document.getElementById('f-detalle-new'); if (ta) ta.value = '';
+    const ef = document.getElementById('f-detalle-fecha'); if (ef) ef.value = '';
   }
 }
 function rmDetalleEntry(i) {
