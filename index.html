@@ -574,21 +574,33 @@ tr.data-row.expanded td{background:#f5f0eb}
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem">
           <!-- ÚLTIMO MOVIMIENTO / DETALLE (con historial) -->
           <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
-            <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último movimiento / detalle</label>
-            <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:8px">
-              <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="flex:1;min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none"></textarea>
-              <button type="button" onclick="addDetalleEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+              <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Último movimiento / detalle</label>
+              <button type="button" onclick="toggleAddDetalle()" style="padding:5px 11px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+            </div>
+            <!-- Mini formulario colapsado por defecto. Se abre al tocar "+ Agregar". -->
+            <div id="add-detalle-form" style="display:none;margin-bottom:8px">
+              <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="width:100%;min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none;margin-bottom:6px"></textarea>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button type="button" onclick="toggleAddDetalle()" style="padding:5px 11px;background:#fff;color:#758B8F;border:1px solid #d4c9be;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Cancelar</button>
+                <button type="button" onclick="addDetalleEntry()" style="padding:5px 11px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Guardar</button>
+              </div>
             </div>
             <div id="detalle-hist-list" class="hist-scroll" style="display:flex;flex-direction:column;gap:5px"></div>
           </div>
           <!-- ÚLTIMO ESCRITO PRESENTADO (con historial + fecha) -->
           <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
-            <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último escrito presentado</label>
-            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
-              <textarea id="f-escrito-new" placeholder="Descripción del escrito..." style="min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+              <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Último escrito presentado</label>
+              <button type="button" onclick="toggleAddEscrito()" style="padding:5px 11px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+            </div>
+            <!-- Mini formulario colapsado por defecto. Se abre al tocar "+ Agregar". -->
+            <div id="add-escrito-form" style="display:none;margin-bottom:8px">
+              <textarea id="f-escrito-new" placeholder="Descripción del escrito..." style="width:100%;min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none;margin-bottom:6px"></textarea>
               <div style="display:flex;gap:6px;align-items:center">
                 <input type="date" id="f-escrito-fecha" title="Fecha del escrito (opcional)" style="flex:1;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">
-                <button type="button" onclick="addEscritoEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
+                <button type="button" onclick="toggleAddEscrito()" style="padding:5px 11px;background:#fff;color:#758B8F;border:1px solid #d4c9be;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Cancelar</button>
+                <button type="button" onclick="addEscritoEntry()" style="padding:5px 11px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Guardar</button>
               </div>
             </div>
             <div id="escrito-hist-list" class="hist-scroll" style="display:flex;flex-direction:column;gap:5px"></div>
@@ -1502,6 +1514,9 @@ function openCausaModal(idx) {
   const _dnew = document.getElementById('f-detalle-new'); if (_dnew) _dnew.value = '';
   const _enew = document.getElementById('f-escrito-new'); if (_enew) _enew.value = '';
   const _efec = document.getElementById('f-escrito-fecha'); if (_efec) _efec.value = '';
+  // Colapsar los mini-formularios al abrir una causa
+  const _addD = document.getElementById('add-detalle-form'); if (_addD) _addD.style.display = 'none';
+  const _addE = document.getElementById('add-escrito-form'); if (_addE) _addE.style.display = 'none';
   renderDetalleHist(); renderEscritoHist();
   renderOficios(); renderTestigos(); renderPericial(); renderCuotas(); updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
@@ -1691,7 +1706,22 @@ function addDetalleEntry() {
   ta.value = '';
   // Mantener f-detalle hidden actualizado con la entrada más reciente
   const hidden = document.getElementById('f-detalle'); if (hidden) hidden.value = t;
+  // Colapsar el mini-form después de guardar
+  const f = document.getElementById('add-detalle-form'); if (f) f.style.display = 'none';
   renderDetalleHist();
+}
+function toggleAddDetalle() {
+  const f = document.getElementById('add-detalle-form'); if (!f) return;
+  const willOpen = (f.style.display === 'none' || !f.style.display);
+  if (willOpen) {
+    f.style.display = 'block';
+    const ta = document.getElementById('f-detalle-new');
+    if (ta) setTimeout(function(){ ta.focus(); }, 30);
+  } else {
+    f.style.display = 'none';
+    // Cancelar limpia lo escrito sin guardar
+    const ta = document.getElementById('f-detalle-new'); if (ta) ta.value = '';
+  }
 }
 function rmDetalleEntry(i) {
   if (!confirm('¿Eliminar esta entrada del historial?\n\nSe va a guardar definitivamente cuando confirmes la causa.')) return;
@@ -1732,7 +1762,23 @@ function addEscritoEntry() {
   escritoHistTemp.unshift({ texto: t, fecha: fechaDisplay, user: currentUser || '' });
   ta.value = '';
   if (fechaInput) fechaInput.value = '';
+  // Colapsar el mini-form después de guardar
+  const f = document.getElementById('add-escrito-form'); if (f) f.style.display = 'none';
   renderEscritoHist();
+}
+function toggleAddEscrito() {
+  const f = document.getElementById('add-escrito-form'); if (!f) return;
+  const willOpen = (f.style.display === 'none' || !f.style.display);
+  if (willOpen) {
+    f.style.display = 'block';
+    const ta = document.getElementById('f-escrito-new');
+    if (ta) setTimeout(function(){ ta.focus(); }, 30);
+  } else {
+    f.style.display = 'none';
+    // Cancelar limpia lo escrito sin guardar
+    const ta = document.getElementById('f-escrito-new'); if (ta) ta.value = '';
+    const ef = document.getElementById('f-escrito-fecha'); if (ef) ef.value = '';
+  }
 }
 function rmEscritoEntry(i) {
   if (!confirm('¿Eliminar este escrito del historial?\n\nSe va a guardar definitivamente cuando confirmes la causa.')) return;
