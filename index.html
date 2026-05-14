@@ -213,6 +213,12 @@ tr.data-row.expanded td{background:#f5f0eb}
 .resp-btn{padding:4px 8px;border:1px solid #d4c9be;border-radius:20px;font-size:12px;background:#fff;cursor:pointer;transition:all .15s;font-family:'Montserrat',sans-serif}
 .resp-btn.active{background:#2F4F56;color:#F2EAE1;border-color:#2F4F56}
 .resp-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;background:#e8e0d8;color:#2F4F56}
+/* Scroll compacto y visible para los historiales (Último movimiento + Último escrito) */
+.hist-scroll{max-height:160px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:#b8a89b transparent}
+.hist-scroll::-webkit-scrollbar{width:8px}
+.hist-scroll::-webkit-scrollbar-track{background:transparent}
+.hist-scroll::-webkit-scrollbar-thumb{background:#b8a89b;border-radius:4px}
+.hist-scroll::-webkit-scrollbar-thumb:hover{background:#9b8a7d}
 </style>
 </head>
 <body>
@@ -570,22 +576,22 @@ tr.data-row.expanded td{background:#f5f0eb}
           <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
             <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último movimiento / detalle</label>
             <div style="display:flex;gap:6px;align-items:stretch;margin-bottom:8px">
-              <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="flex:1;min-height:48px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:vertical"></textarea>
+              <textarea id="f-detalle-new" placeholder="Anotá un nuevo movimiento..." style="flex:1;min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none"></textarea>
               <button type="button" onclick="addDetalleEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
             </div>
-            <div id="detalle-hist-list" style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto"></div>
+            <div id="detalle-hist-list" class="hist-scroll" style="display:flex;flex-direction:column;gap:5px"></div>
           </div>
           <!-- ÚLTIMO ESCRITO PRESENTADO (con historial + fecha) -->
           <div style="background:#faf7f4;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px">
             <label style="font-size:11px;color:#758B8F;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:10px">Último escrito presentado</label>
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
-              <textarea id="f-escrito-new" placeholder="Descripción del escrito..." style="min-height:48px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:vertical"></textarea>
+              <textarea id="f-escrito-new" placeholder="Descripción del escrito..." style="min-height:48px;max-height:90px;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif;resize:none"></textarea>
               <div style="display:flex;gap:6px;align-items:center">
                 <input type="date" id="f-escrito-fecha" title="Fecha del escrito (opcional)" style="flex:1;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:Montserrat,sans-serif">
                 <button type="button" onclick="addEscritoEntry()" style="padding:7px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif;white-space:nowrap">+ Agregar</button>
               </div>
             </div>
-            <div id="escrito-hist-list" style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto"></div>
+            <div id="escrito-hist-list" class="hist-scroll" style="display:flex;flex-direction:column;gap:5px"></div>
           </div>
         </div>
       </div>
