@@ -54,7 +54,7 @@ th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:#758B8
 td{padding:10px 12px;font-size:13px;border-bottom:1px dashed #e8e0d8;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr.data-row:hover td{background:#faf7f4;cursor:pointer}
-.col-autos{width:35%}.col-expte{width:12%}.col-juz{width:13%}.col-etapa{width:13%}.col-detalle{width:27%}
+.col-autos{width:27%}.col-expte{width:9%}.col-juz{width:11%}.col-etapa{width:12%}.col-detalle{width:20%}.col-escrito{width:21%}
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .b-dc{background:#dbeafe;color:#1e40af}.b-tl{background:#ede9fe;color:#5b21b6}
 .b-pr{background:#fef3c7;color:#92400e}.b-st{background:#d1fae5;color:#065f46}
@@ -308,6 +308,7 @@ tr.data-row.expanded td{background:#f5f0eb}
         <th class="col-juz">Juzgado</th>
         <th class="col-etapa">Etapa</th>
         <th class="col-detalle">Último movimiento</th>
+        <th class="col-escrito">Último escrito</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -1376,7 +1377,7 @@ function toggleDetailPanel(row, idx) {
   const driveBtn = c.drive
     ? '<a href="' + c.drive + '" target="_blank" style="padding:5px 12px;border:1px solid #d4c9be;border-radius:7px;font-size:12px;background:#fff;color:#2F4F56;text-decoration:none;display:inline-flex;align-items:center;gap:5px">🔗 Abrir Drive</a>'
     : '<span style="color:#d4c9be;font-size:12px">Sin link de Drive</span>';
-  tr.innerHTML = '<td colspan="5"><div class="detail-panel-inner">' +
+  tr.innerHTML = '<td colspan="6"><div class="detail-panel-inner">' +
     '<div class="detail-panel-item"><label>Monto demanda</label><div class="val">' + (c.montoDem ? fmtARS(c.montoDem) : '—') + '</div>' +
     (c.montoSent ? '<div style="margin-top:4px"><label>Monto sentencia</label><div class="val">' + fmtARS(c.montoSent) + '</div></div>' : '') + '</div>' +
     '<div class="detail-panel-item"><label>Para hacer</label><div class="val' + (hasPend?' hacer':'') + '">' + (hasPend ? c.hacer : '—') + '</div>' +
@@ -1412,15 +1413,28 @@ function renderTable() {
     return true;
   });
   const tb = document.getElementById('tbody');
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">No se encontraron causas</td></tr>'; return; }
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No se encontraron causas</td></tr>'; return; }
   tb.innerHTML = rows.map(function(c) {
     const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
+    // Último escrito: extraer la entrada más reciente de escritoHist (JSON serializado en la sheet).
+    // Si no hay nada, "—". El formato es "DD/MM/AAAA — texto" para que se entienda de un vistazo.
+    let lastEsc = '';
+    try {
+      const arr = c.escritoHist ? JSON.parse(c.escritoHist) : [];
+      if (Array.isArray(arr) && arr.length > 0) {
+        const f = (arr[0].fecha || '').toString().trim();
+        const t = (arr[0].texto || '').toString().trim();
+        if (f && t) lastEsc = f + ' — ' + t;
+        else lastEsc = t || f || '';
+      }
+    } catch(e) { lastEsc = ''; }
     return '<tr class="data-row" onclick="toggleDetailPanel(this,' + c._i + ')" ondblclick="openCausaModal(' + c._i + ')">' +
       '<td class="col-autos"><span style="font-weight:600">' + c.autos + '</span>' + driveIco + '</td>' +
       '<td class="col-expte" style="color:#758B8F;font-size:12px">' + (c.expte||'—') + '</td>' +
       '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'—') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
       '<td class="col-detalle"><span class="detail-text">' + (c.detalle||'—') + '</span></td>' +
+      '<td class="col-escrito"><span class="detail-text">' + (lastEsc||'—') + '</span></td>' +
       '</tr>';
   }).join('');
 }
