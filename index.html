@@ -1864,7 +1864,7 @@ function renderModalCalendario() {
     evs.map(function(e) {
       var col = colorMap[evClass(e.tipo||'')]||'#758B8F';
       var obsText = (e.obs&&!e.obs.startsWith('http'))?e.obs:'';
-      var linkUrl = e.link&&e.link.startsWith('http')?e.link:(e.obs&&e.obs.startsWith('http')?e.obs:'');
+      var linkUrl = _normEvLink(e.link, e.obs);
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#faf7f4;border-radius:8px;border-left:3px solid '+col+'">' +
         '<div style="min-width:90px"><div style="font-size:12px;font-weight:600;color:#2F4F56">'+(e.fecha||'—')+'</div><div style="font-size:11px;color:#758B8F">'+(e.hora||'')+'</div></div>' +
         '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#2F4F56">'+(e.tipo||'Evento')+'</div>'+(obsText?'<div style="font-size:11px;color:#758B8F">'+obsText+'</div>':'')+'</div>' +
@@ -2187,6 +2187,26 @@ function setCalView(v){
   document.getElementById('cal-grid-container').style.display=(v==='grid')?'block':'none';
   if(v==='grid')renderCalGrid(); else renderCal();
 }
+// Normaliza un link de evento. Acepta:
+//   "https://..."       → se devuelve tal cual
+//   "http://..."        → se devuelve tal cual
+//   "meet.google.com/x" → se devuelve "https://meet.google.com/x" (auto-prepende protocolo)
+//   "www.zoom.us/j/123" → se devuelve "https://www.zoom.us/j/123"
+//   espacios al inicio o final → se limpian
+// Si el link no parece URL, intenta el campo obs como fallback (compat con eventos viejos).
+// Devuelve '' si nada matchea.
+function _normEvLink(rawLink, rawObs) {
+  function clean(s) { return String(s == null ? '' : s).trim(); }
+  function asUrl(s) {
+    s = clean(s);
+    if (!s) return '';
+    if (/^https?:\/\//i.test(s)) return s;
+    // Heurística: dominio con al menos un punto, sin espacios, mínimo 4 caracteres.
+    if (!/\s/.test(s) && /^[^\s]+\.[^\s]+/.test(s) && s.length >= 4) return 'https://' + s;
+    return '';
+  }
+  return asUrl(rawLink) || asUrl(rawObs);
+}
 function renderCal(){
   const q=(document.getElementById('cal-search').value||'').toLowerCase();
   const tipo=document.getElementById('cal-tipo').value, mes=document.getElementById('cal-mes').value, vista=document.getElementById('cal-vista').value;
@@ -2216,7 +2236,7 @@ function renderCal(){
     html+='<div class="'+(calView==='cards'?'day-cards':'day-list')+'">';
     dayEvs.forEach(function(e){
       const obsText=(e.obs&&!e.obs.startsWith('http'))?e.obs:'';
-      const linkUrl=e.link&&e.link.startsWith('http')?e.link:(e.obs&&e.obs.startsWith('http')?e.obs:'');
+      const linkUrl = _normEvLink(e.link, e.obs);
       const isDone=(e.done===true||e.done==='true'||e.done==='1'||e.done==='TRUE');
       const doneClass=isDone?' ev-done':'';
       // Botón ✔ Realizado (solo si NO está done) o badge "Realizado" (si SI está done)
