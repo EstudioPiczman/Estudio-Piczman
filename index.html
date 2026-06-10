@@ -213,6 +213,8 @@ tr.data-row.expanded td{background:#f5f0eb}
 .resp-btn{padding:4px 8px;border:1px solid #d4c9be;border-radius:20px;font-size:12px;background:#fff;cursor:pointer;transition:all .15s;font-family:'Montserrat',sans-serif}
 .resp-btn.active{background:#2F4F56;color:#F2EAE1;border-color:#2F4F56}
 .resp-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:600;background:#e8e0d8;color:#2F4F56}
+/* ETIQUETA */
+.etiqueta-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:#2F4F56;color:#F2EAE1;border:1px solid #264448;text-decoration:none;white-space:nowrap;vertical-align:middle;margin-left:6px;letter-spacing:.04em;text-transform:uppercase}
 /* Scroll compacto y visible para los historiales (Último movimiento + Último escrito) */
 .hist-scroll{max-height:115px;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:#b8a89b transparent}
 .hist-scroll::-webkit-scrollbar{width:8px}
@@ -560,6 +562,7 @@ tr.data-row.expanded td{background:#f5f0eb}
           <option>Ejecución</option><option>Conciliado</option><option>Acuerdo conciliatorio</option>
         </select>
       </div>
+      <div class="form-group"><label>Etiqueta <span style="font-size:10px;color:#a0b4b8;font-weight:400;text-transform:none">(ej: #Firma-ológrafa, #Urgente)</span></label><input id="f-etiqueta" type="text" placeholder="#..."></div>
       <div class="form-group"><label>Celular cliente</label><input id="f-cel" type="text"></div>
       <div class="form-group full">
         <label>Link Drive <span style="font-size:10px;color:#a0b4b8;font-weight:400;text-transform:none">(carpeta o archivo del caso)</span></label>
@@ -827,7 +830,7 @@ const ETAPA_CLASS = {
 // columnas en las sheets. Causas viejas leen esas columnas como '' (parser tolera ausencia)
 // y al primer guardado se persisten — sin perder 'detalle' legacy, que se siembra como
 // primera entrada del historial al abrir el modal por primera vez (ver openCausaModal).
-const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct','detalleHist','escritoHist'];
+const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct','etiqueta','detalleHist','escritoHist'];
 // 'evid' y 'evpass' apendeados al final para no alterar el orden histórico de columnas
 // en la sheet Calendario. Eventos viejos quedan con esos campos vacíos.
 const EV_COLS = ['tipo','fechahora','causa','link','obs','resp','pendLink','done','doneBy','doneAt','evid','evpass'];
@@ -1416,6 +1419,7 @@ function renderTable() {
   if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">No se encontraron causas</td></tr>'; return; }
   tb.innerHTML = rows.map(function(c) {
     const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
+    const etiquetaTag = c.etiqueta ? '<span class="etiqueta-tag">' + String(c.etiqueta).replace(/[<>]/g, '') + '</span>' : '';
     // Último escrito: extraer la entrada más reciente de escritoHist (JSON serializado en la sheet).
     // Si no hay nada, "—". El formato es "DD/MM/AAAA — texto" para que se entienda de un vistazo.
     let lastEsc = '';
@@ -1429,7 +1433,7 @@ function renderTable() {
       }
     } catch(e) { lastEsc = ''; }
     return '<tr class="data-row" onclick="toggleDetailPanel(this,' + c._i + ')" ondblclick="openCausaModal(' + c._i + ')">' +
-      '<td class="col-autos"><span style="font-weight:600">' + c.autos + '</span>' + driveIco + '</td>' +
+      '<td class="col-autos"><span style="font-weight:600">' + c.autos + '</span>' + driveIco + etiquetaTag + '</td>' +
       '<td class="col-expte" style="color:#758B8F;font-size:12px">' + (c.expte||'—') + '</td>' +
       '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'—') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
@@ -1480,7 +1484,7 @@ function openCausaModal(idx) {
   // 'f-' + camelCase. Antes, getElementById devolvía null, el textarea NO se
   // reseteaba al cambiar de causa, y al guardar se contaminaba con el valor
   // de la causa anterior. Los reseteamos explícitamente más abajo.
-  ['autos','expte','juzgado','cel','detalle','hacer','msg','drive'].forEach(function(f) {
+  ['autos','expte','juzgado','cel','detalle','hacer','msg','drive','etiqueta'].forEach(function(f) {
     const el = document.getElementById('f-' + f); if (el) el.value = c[f] || '';
   });
   const pendPruebaEl = document.getElementById('f-pend-prueba');
@@ -1574,7 +1578,8 @@ function saveCausa() {
     msg: document.getElementById('f-msg').value,
     msgMes: document.getElementById('f-msg-mes') ? document.getElementById('f-msg-mes').value : '',
     drive: document.getElementById('f-drive') ? document.getElementById('f-drive').value : '',
-    tasaPct: ''
+    tasaPct: '',
+    etiqueta: document.getElementById('f-etiqueta') ? document.getElementById('f-etiqueta').value : ''
   };
   // ===== Flush + persistencia de historiales =====
   // Si el usuario dejó texto escrito en los textareas de "Agregar" sin haber clickeado
