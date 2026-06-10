@@ -214,6 +214,18 @@ tr.data-row.expanded td{background:#f5f0eb}
 .etiqueta-tag.et-blue{background:#dbeafe;color:#1e40af;border-color:#93c5fd}
 .etiqueta-tag.et-red{background:#fee2e2;color:#991b1b;border-color:#fca5a5}
 .etiqueta-tag.et-gray{background:#f3f4f6;color:#374151;border-color:#d1d5db}
+/* HISTORIAL PANEL */
+.hist-scroll{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.hist-entry{background:#faf7f4;border-radius:8px;padding:8px 10px;border-left:3px solid #2F4F56;font-size:12px;position:relative}
+.hist-entry .hist-fecha{font-size:10px;color:#758B8F;margin-top:3px}
+.hist-entry .hist-user{font-size:10px;color:#a0b4b8;float:right}
+.hist-entry .hist-rm{position:absolute;top:6px;right:6px;background:none;border:none;color:#fca5a5;cursor:pointer;font-size:13px;padding:0}
+.hist-add-form{display:flex;gap:6px;margin-top:6px}
+.hist-add-form input{flex:1;padding:7px 9px;border:1px solid #d4c9be;border-radius:6px;font-size:12px;font-family:'Montserrat',sans-serif}
+.hist-add-form input[type=date]{width:130px;flex:none}
+.hist-section{background:#fff;border:1px solid #d4c9be;border-radius:10px;padding:12px 14px}
+.hist-section-title{font-size:11px;font-weight:700;color:#758B8F;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.col-escrito{width:20%}
 </style>
 </head>
 <body>
@@ -302,7 +314,7 @@ tr.data-row.expanded td{background:#f5f0eb}
         <th class="col-expte">Expediente</th>
         <th class="col-juz">Juzgado</th>
         <th class="col-etapa">Etapa</th>
-        <th class="col-detalle">Último movimiento</th>
+        <th class="col-detalle">Último movimiento</th><th class="col-escrito">Último escrito</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -590,7 +602,27 @@ tr.data-row.expanded td{background:#f5f0eb}
           <a id="f-drive-btn" href="#" target="_blank" onclick="return openDriveLink()" title="Abrir Drive" style="padding:9px 12px;border:1px solid #d4c9be;border-radius:8px;background:#fff;color:#758B8F;text-decoration:none;font-size:14px;white-space:nowrap;display:none">🔗 Abrir</a>
         </div>
       </div>
-      <div class="form-group full"><label>Último movimiento / detalle</label><textarea id="f-detalle"></textarea></div>
+      <div class="form-group full" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="hist-section">
+          <div class="hist-section-title">Último movimiento / detalle <button type="button" onclick="toggleAddDetalle()" style="padding:3px 10px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:Montserrat,sans-serif">+ Agregar</button></div>
+          <div class="hist-scroll" id="hist-detalle-list"></div>
+          <div class="hist-add-form" id="hist-detalle-form" style="display:none">
+            <input type="text" id="hist-detalle-txt" placeholder="Nuevo movimiento...">
+            <input type="date" id="hist-detalle-fecha">
+            <button type="button" onclick="addDetalleEntry()" style="padding:6px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:Montserrat,sans-serif">Agregar</button>
+          </div>
+        </div>
+        <div class="hist-section">
+          <div class="hist-section-title">Último escrito presentado <button type="button" onclick="toggleAddEscrito()" style="padding:3px 10px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:Montserrat,sans-serif">+ Agregar</button></div>
+          <div class="hist-scroll" id="hist-escrito-list"></div>
+          <div class="hist-add-form" id="hist-escrito-form" style="display:none">
+            <input type="text" id="hist-escrito-txt" placeholder="Nuevo escrito...">
+            <input type="date" id="hist-escrito-fecha">
+            <button type="button" onclick="addEscritoEntry()" style="padding:6px 12px;background:#2F4F56;color:#F2EAE1;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:Montserrat,sans-serif">Agregar</button>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" id="f-detalle">
       <div class="form-group full"><label>Para hacer (pendientes)</label><textarea id="f-hacer" style="min-height:52px"></textarea></div>
     </div>
   </div>
@@ -765,7 +797,7 @@ const ETAPA_CLASS = {
   'Sentencia':'b-st','Ejecución':'b-ej','Conciliado':'b-co',
   'Acuerdo conciliatorio':'b-ac','CONCILIADO':'b-co'
 };
-const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct'];
+const CAUSAS_COLS = ['autos','expte','juzgado','etapa','cel','detalle','hacer','pruebas','test','info','peri','pendPrueba','montoDem','fechaDem','montoSent','fechaSent','tasa','cobro','montoCobrado','obsFin','cuotas','msg','msgMes','drive','tasaPct','etiqueta','detalleHist','escritoHist'];
 const EV_COLS = ['tipo','fechahora','causa','link','obs','resp'];
 
 let state = { laboral:[], comercial:[], cautelares:[], eventos:[], pendientes:{negociacion:[],demanda:[],prueba:[],sortear:[],escritos:[]}, notas:{}, archivo:[] };
@@ -1054,12 +1086,19 @@ function renderTable() {
   tb.innerHTML = rows.map(function(c) {
     const driveIco = c.drive ? '<a href="' + c.drive + '" target="_blank" onclick="event.stopPropagation()" class="drive-icon" title="Abrir Drive">🔗</a>' : '';
     const etiquetaTag = c.etiqueta ? '<span class="etiqueta-tag">' + String(c.etiqueta).replace(/[<>]/g, '') + '</span>' : '';
+    // Last detalle entry
+    var dh = []; try { dh = c.detalleHist ? JSON.parse(c.detalleHist) : []; if(!Array.isArray(dh)) dh=[]; } catch(e){dh=[];}
+    var lastDet = dh.length ? dh[0].texto : (c.detalle||'—');
+    // Last escrito entry
+    var eh = []; try { eh = c.escritoHist ? JSON.parse(c.escritoHist) : []; if(!Array.isArray(eh)) eh=[]; } catch(e){eh=[];}
+    var lastEsc = eh.length ? eh[0].texto : '—';
     return '<tr class="data-row" onclick="toggleDetailPanel(this,' + c._i + ')" ondblclick="openCausaModal(' + c._i + ')">' +
       '<td class="col-autos"><span style="font-weight:600">' + c.autos + '</span>' + driveIco + etiquetaTag + '</td>' +
       '<td class="col-expte" style="color:#758B8F;font-size:12px">' + (c.expte||'—') + '</td>' +
       '<td class="col-juz" style="color:#758B8F;font-size:12px">' + (c.juzgado||'—') + '</td>' +
       '<td class="col-etapa">' + etapaBadge(c.etapa) + '</td>' +
-      '<td class="col-detalle"><span class="detail-text">' + (c.detalle||'—') + '</span></td>' +
+      '<td class="col-detalle"><span class="detail-text">' + lastDet + '</span></td>' +
+      '<td class="col-escrito"><span class="detail-text" style="color:#758B8F">' + lastEsc + '</span></td>' +
       '</tr>';
   }).join('');
 }
@@ -1126,6 +1165,10 @@ function openCausaModal(idx) {
   try { pericialTemp = c.peri ? JSON.parse(c.peri) : []; if (!Array.isArray(pericialTemp)) throw 0; }
   catch(e) { pericialTemp = []; }
   if (editCausaIdx === null) pericialTemp = [{tipo:'Pericial Contable',fsDesig:'',fsPresent:''}];
+  // Load detalleHist and escritoHist
+  try { detalleHistTemp = c.detalleHist ? JSON.parse(c.detalleHist) : []; if(!Array.isArray(detalleHistTemp)) detalleHistTemp=[]; } catch(e){ detalleHistTemp=[]; }
+  try { escritoHistTemp = c.escritoHist ? JSON.parse(c.escritoHist) : []; if(!Array.isArray(escritoHistTemp)) escritoHistTemp=[]; } catch(e){ escritoHistTemp=[]; }
+  setTimeout(function(){ renderDetalleHist(); renderEscritoHist(); }, 50);
   renderOficios(); renderTestigos(); renderPericial(); renderCuotas(); updateDriveBtn();
   showMTab('datos', document.querySelector('.modal-tab'));
   document.getElementById('modal-causa-bg').classList.add('open');
@@ -1167,7 +1210,9 @@ function saveCausa() {
     msgMes: document.getElementById('f-msg-mes') ? document.getElementById('f-msg-mes').value : '',
     drive: document.getElementById('f-drive') ? document.getElementById('f-drive').value : '',
     tasaPct: '',
-    etiqueta: document.getElementById('f-etiqueta') ? document.getElementById('f-etiqueta').value : ''
+    etiqueta: document.getElementById('f-etiqueta') ? document.getElementById('f-etiqueta').value : '',
+    detalleHist: JSON.stringify(detalleHistTemp),
+    escritoHist: JSON.stringify(escritoHistTemp)
   };
   const arr = getFueroState(fuero);
   if (editCausaIdx !== null && fuero === currentFuero) arr[editCausaIdx] = obj;
@@ -1942,6 +1987,64 @@ function restaurarNota(idx){
     state.notas[currentUser][idx].status='pendiente';
     saveNotas(); renderNotas(); renderNotasArchivo();
   }
+}
+
+
+// DETALLE HIST & ESCRITO HIST
+var detalleHistTemp = [], escritoHistTemp = [];
+
+function renderDetalleHist() {
+  var el = document.getElementById('hist-detalle-list'); if (!el) return;
+  if (!detalleHistTemp.length) { el.innerHTML = '<div style="color:#d4c9be;font-size:12px;padding:4px">Sin movimientos registrados</div>'; return; }
+  el.innerHTML = detalleHistTemp.map(function(e, i) {
+    return '<div class="hist-entry">' +
+      '<button class="hist-rm" onclick="detalleHistTemp.splice('+i+',1);renderDetalleHist()">×</button>' +
+      '<div>' + (e.texto||'') + '</div>' +
+      '<div class="hist-fecha">' + (e.fecha ? '📅 ' + e.fecha : '') + ' <span class="hist-user">' + (e.user||'') + '</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderEscritoHist() {
+  var el = document.getElementById('hist-escrito-list'); if (!el) return;
+  if (!escritoHistTemp.length) { el.innerHTML = '<div style="color:#d4c9be;font-size:12px;padding:4px">Sin escritos registrados</div>'; return; }
+  el.innerHTML = escritoHistTemp.map(function(e, i) {
+    return '<div class="hist-entry" style="border-left-color:#758B8F">' +
+      '<button class="hist-rm" onclick="escritoHistTemp.splice('+i+',1);renderEscritoHist()">×</button>' +
+      '<div>' + (e.texto||'') + '</div>' +
+      '<div class="hist-fecha">' + (e.fecha ? '📅 ' + e.fecha : '') + ' <span class="hist-user">' + (e.user||'') + '</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+function toggleAddDetalle() {
+  var f = document.getElementById('hist-detalle-form');
+  if (f) f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+}
+
+function toggleAddEscrito() {
+  var f = document.getElementById('hist-escrito-form');
+  if (f) f.style.display = f.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addDetalleEntry() {
+  var txt = document.getElementById('hist-detalle-txt');
+  var fecha = document.getElementById('hist-detalle-fecha');
+  if (!txt || !txt.value.trim()) return;
+  detalleHistTemp.unshift({ texto: txt.value.trim(), fecha: fecha ? fecha.value : '', user: currentUser });
+  txt.value = ''; if (fecha) fecha.value = '';
+  document.getElementById('hist-detalle-form').style.display = 'none';
+  renderDetalleHist();
+}
+
+function addEscritoEntry() {
+  var txt = document.getElementById('hist-escrito-txt');
+  var fecha = document.getElementById('hist-escrito-fecha');
+  if (!txt || !txt.value.trim()) return;
+  escritoHistTemp.unshift({ texto: txt.value.trim(), fecha: fecha ? fecha.value : '', user: currentUser });
+  txt.value = ''; if (fecha) fecha.value = '';
+  document.getElementById('hist-escrito-form').style.display = 'none';
+  renderEscritoHist();
 }
 
 checkSession();
